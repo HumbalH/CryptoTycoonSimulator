@@ -3,7 +3,7 @@ import BottomControlPanel from '../BottomControlPanel';
 export default function BottomControlPanelExample() {
   return (
     <BottomControlPanel 
-      buildContent={<div className="grid grid-cols-3 gap-4">
+      buildPCContent={<div className="grid grid-cols-3 gap-4">
         {[1, 2, 3].map(i => (
           <div key={i} className="p-4 bg-card rounded-md border border-card-border">
             PC Type {i}
@@ -17,3 +17,4 @@ export default function BottomControlPanelExample() {
     />
   );
 }
+
