@@ -65,16 +65,16 @@ export default function BottomControlPanel({
               </TabsContent>
             </Tabs>
           </TabsContent>
-          <TabsContent value="upgrade" className="p-6 m-0">
+          <TabsContent value="upgrade" className="px-6 pb-6 m-0">
             {upgradeContent || <div className="text-muted-foreground">Upgrade content goes here</div>}
           </TabsContent>
-          <TabsContent value="workers" className="p-6 m-0">
+          <TabsContent value="workers" className="px-6 pb-6 m-0">
             {workersContent || <div className="text-muted-foreground">Workers content goes here</div>}
           </TabsContent>
-          <TabsContent value="tokens" className="p-6 m-0">
+          <TabsContent value="tokens" className="px-6 pb-6 m-0">
             {tokensContent || <div className="text-muted-foreground">Tokens content goes here</div>}
           </TabsContent>
-          <TabsContent value="celebrities" className="p-6 m-0">
+          <TabsContent value="celebrities" className="px-6 pb-6 m-0">
             {celebritiesContent || <div className="text-muted-foreground">Celebrities content goes here</div>}
           </TabsContent>
         </div>
