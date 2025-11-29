@@ -42,9 +42,9 @@ export default function Game() {
       type: {
         id: 'budget',
         name: 'Budget Rig',
-        description: 'Entry-level mining setup',
+        description: 'Mines 1 token per second',
         cost: 1000,
-        miningRate: 10,
+        miningRate: 1,
         level: 1,
         unlocked: true,
         icon: 'budget'
@@ -65,9 +65,9 @@ export default function Game() {
     {
       id: 'budget',
       name: 'Budget Rig',
-      description: 'Entry-level mining setup for beginners',
+      description: 'Mines 1 token per second',
       cost: 1500,
-      miningRate: 12,
+      miningRate: 1,
       level: 0,
       unlocked: true,
       icon: 'budget'
@@ -75,9 +75,9 @@ export default function Game() {
     {
       id: 'laptop',
       name: 'Laptop Miner',
-      description: 'Portable mining on the go',
+      description: 'Mines 2 tokens per second',
       cost: 5000,
-      miningRate: 22,
+      miningRate: 2,
       level: 0,
       unlocked: true,
       icon: 'laptop'
@@ -85,9 +85,9 @@ export default function Game() {
     {
       id: 'workstation',
       name: 'Workstation',
-      description: 'Powerful all-in-one mining system',
+      description: 'Mines 3 tokens per second',
       cost: 35000,
-      miningRate: 65,
+      miningRate: 3,
       level: 0,
       unlocked: true,
       icon: 'workstation'
@@ -95,9 +95,9 @@ export default function Game() {
     {
       id: 'gaming',
       name: 'Gaming PC',
-      description: 'High-performance rig with RGB cooling',
+      description: 'Mines 4 tokens per second',
       cost: 100000,
-      miningRate: 120,
+      miningRate: 4,
       level: 0,
       unlocked: true,
       icon: 'gaming'
@@ -105,9 +105,9 @@ export default function Game() {
     {
       id: 'mining-rig',
       name: 'Mining Rig',
-      description: 'Specialized mining hardware',
+      description: 'Mines 5 tokens per second',
       cost: 250000,
-      miningRate: 320,
+      miningRate: 5,
       level: 0,
       unlocked: true,
       icon: 'mining-rig'
@@ -115,9 +115,9 @@ export default function Game() {
     {
       id: 'server',
       name: 'Server Rack',
-      description: 'Industrial-grade mining powerhouse',
+      description: 'Mines 6 tokens per second',
       cost: 600000,
-      miningRate: 450,
+      miningRate: 6,
       level: 0,
       unlocked: true,
       icon: 'server'
@@ -125,9 +125,9 @@ export default function Game() {
     {
       id: 'quantum',
       name: 'Quantum Core',
-      description: 'Next-gen quantum mining processor',
+      description: 'Mines 7 tokens per second',
       cost: 1500000,
-      miningRate: 950,
+      miningRate: 7,
       level: 0,
       unlocked: true,
       icon: 'quantum'
@@ -310,10 +310,12 @@ export default function Game() {
     }
   ]);
 
-  // Calculate total mining rate
+  // Calculate total mining rate (in cash/s based on PC rates and token values)
   const totalMiningRate = ownedPCs.reduce((sum, pc) => {
     const token = tokens.find(t => t.id === pc.token);
-    return sum + (token?.profitRate || 0);
+    const tokensPerSecond = pc.type.miningRate; // How many tokens this PC mines per second
+    const cashPerToken = token?.profitRate || 10; // How much each token is worth
+    return sum + (tokensPerSecond * cashPerToken);
   }, 0);
 
   // Calculate earnings multiplier from rebirths (0.1x per rebirth)
@@ -387,7 +389,9 @@ export default function Game() {
       
       setOwnedPCs(prev => prev.map(pc => {
         const token = tokens.find(t => t.id === pc.token);
-        const income = Math.floor((token?.profitRate || 0) * earningsMultiplier);
+        const tokensPerSecond = pc.type.miningRate; // How many tokens this PC mines
+        const cashPerToken = token?.profitRate || 10; // Value per token
+        const income = Math.floor(tokensPerSecond * cashPerToken * earningsMultiplier);
         
         if (hasAutoCollect) {
           // Auto-collect: add directly to cash
