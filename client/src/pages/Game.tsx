@@ -432,6 +432,14 @@ export default function Game() {
     return () => clearInterval(celebInterval);
   }, [totalMined]);
 
+  // Update token unlocks when rebirth count changes
+  useEffect(() => {
+    setTokens(prev => prev.map((token, idx) => ({
+      ...token,
+      unlocked: idx === 0 ? true : rebirthCount >= idx
+    })));
+  }, [rebirthCount]);
+
   // Dynamic token prices - todo: remove mock functionality
   useEffect(() => {
     const priceInterval = setInterval(() => {
