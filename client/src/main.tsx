@@ -1,4 +1,5 @@
 import { createRoot } from "react-dom/client";
+import { Analytics } from "@vercel/analytics/react";
 import App from "./App";
 import "./index.css";
 
@@ -14,7 +15,12 @@ const hideLoadingScreen = () => {
 };
 
 // Start rendering
-root.render(<App />);
+root.render(
+  <>
+    <App />
+    <Analytics />
+  </>
+);
 
 // Hide loading screen after a short delay to ensure initial render
 setTimeout(hideLoadingScreen, 100);
