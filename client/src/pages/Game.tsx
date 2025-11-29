@@ -773,7 +773,7 @@ export default function Game() {
 
       <BottomControlPanel 
         buildPCContent={
-          <div className="space-y-4 overflow-y-auto max-h-[600px]">
+          <div className="space-y-3 overflow-y-auto max-h-[600px]">
             <div className="bg-card/60 border border-primary/20 rounded p-3">
               <p className="text-xs text-muted-foreground font-mono">
                 <span className="text-primary font-bold">Worker Requirements:</span> 1 Technician per 5 PCs | 1 Engineer per 5 Gaming PCs | 1 Expert per 5 Server Racks
@@ -861,7 +861,7 @@ export default function Game() {
           </div>
         }
         upgradeContent={
-          <div className="space-y-6 pt-0">
+          <div className="space-y-4">
             <div className="space-y-2">
               <h3 className="font-bold font-mono text-lg text-primary">PC Upgrades</h3>
               <p className="text-xs text-muted-foreground">Boost mining power and PC performance</p>
@@ -930,7 +930,7 @@ export default function Game() {
           </div>
         }
         workersContent={
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             {availableWorkers.map(worker => (
               <WorkerCard 
                 key={worker.id}
@@ -942,7 +942,7 @@ export default function Game() {
           </div>
         }
         tokensContent={
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="font-bold font-mono text-lg">Token Market</h3>
               <Badge variant="outline">Switch Cost: ${Math.max(0, 1000 - ((upgrades.find(u => u.id === 'token-discount')?.currentLevel || 0) * 200)).toLocaleString()}</Badge>
@@ -975,7 +975,7 @@ export default function Game() {
         }
         celebritiesContent={
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-4">
               <h3 className="font-bold font-mono text-lg mb-4">Celebrity Visits</h3>
               <p className="text-muted-foreground mb-4 text-sm">
                 Famous crypto personalities may visit your mining farm! Unlock more by mining more.
