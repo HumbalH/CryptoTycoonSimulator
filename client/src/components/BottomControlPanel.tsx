@@ -47,34 +47,34 @@ export default function BottomControlPanel({
         </TabsList>
 
         <div className="flex-1 overflow-y-auto">
-          <TabsContent value="build" className="p-0 m-0 h-full flex flex-col">
+          <TabsContent value="build" className="p-0 m-0 mt-0 h-full flex flex-col">
             <Tabs defaultValue="pc" className="flex flex-col w-full">
               <TabsList className="w-full justify-start rounded-none bg-card/40 border-b border-primary/10 px-6 gap-2 py-1">
                 <TabsTrigger value="pc" className="text-sm data-[state=active]:bg-primary/20" data-testid="tab-build-pc">PC</TabsTrigger>
                 <TabsTrigger value="decorations" className="text-sm data-[state=active]:bg-primary/20" data-testid="tab-build-decorations">Decorations</TabsTrigger>
                 <TabsTrigger value="utility" className="text-sm data-[state=active]:bg-primary/20" data-testid="tab-build-utility">Utility</TabsTrigger>
               </TabsList>
-              <TabsContent value="pc" className="p-3 m-0">
+              <TabsContent value="pc" className="p-3 m-0 mt-0">
                 {buildPCContent || <div className="text-muted-foreground">PC content goes here</div>}
               </TabsContent>
-              <TabsContent value="decorations" className="p-3 m-0">
+              <TabsContent value="decorations" className="p-3 m-0 mt-0">
                 {buildDecorationsContent || <div className="text-muted-foreground">Decorations content goes here</div>}
               </TabsContent>
-              <TabsContent value="utility" className="p-3 m-0">
+              <TabsContent value="utility" className="p-3 m-0 mt-0">
                 {buildUtilityContent || <div className="text-muted-foreground">Utility content goes here</div>}
               </TabsContent>
             </Tabs>
           </TabsContent>
-          <TabsContent value="upgrade" className="p-0 m-0">
+          <TabsContent value="upgrade" className="p-0 m-0 mt-0">
             {upgradeContent || <div className="text-muted-foreground">Upgrade content goes here</div>}
           </TabsContent>
-          <TabsContent value="workers" className="p-0 m-0">
+          <TabsContent value="workers" className="p-0 m-0 mt-0">
             {workersContent || <div className="text-muted-foreground">Workers content goes here</div>}
           </TabsContent>
-          <TabsContent value="tokens" className="p-0 m-0">
+          <TabsContent value="tokens" className="p-0 m-0 mt-0">
             {tokensContent || <div className="text-muted-foreground">Tokens content goes here</div>}
           </TabsContent>
-          <TabsContent value="celebrities" className="p-0 m-0">
+          <TabsContent value="celebrities" className="p-0 m-0 mt-0">
             {celebritiesContent || <div className="text-muted-foreground">Celebrities content goes here</div>}
           </TabsContent>
         </div>
