@@ -33,10 +33,10 @@ export default function TopResourceBar({
   };
 
   return (
-    <div className="h-20 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 backdrop-blur-md border-b-2 border-primary/30 px-6 flex items-center justify-between shadow-lg" data-testid="top-resource-bar">
-      <div className="flex items-center gap-6">
+    <div className="h-auto md:h-20 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 backdrop-blur-md border-b-2 border-primary/30 px-2 md:px-6 py-2 md:py-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 shadow-lg" data-testid="top-resource-bar">
+      <div className="flex items-center gap-2 md:gap-6 w-full md:w-auto justify-between md:justify-start">
         <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold font-mono text-primary">CRYPTO MINE</h1>
+          <h1 className="text-lg md:text-2xl font-bold font-mono text-primary">CRYPTO MINE</h1>
           {rebirthCount > 0 && (
             <Badge className="bg-gradient-to-r from-orange-500 to-red-500 gap-1">
               <Flame className="h-3 w-3" />
@@ -44,13 +44,13 @@ export default function TopResourceBar({
             </Badge>
           )}
         </div>
-        <div className="flex gap-4">
+        <div className="flex gap-2 md:gap-4 overflow-x-auto">
           <ResourceCounter icon={DollarSign} label="Cash" value={formatNumber(cash)} />
           <ResourceCounter icon={Zap} label="Rate/s" value={`${formatNumber(miningRate)} (${earningsMultiplier.toFixed(1)}x)`} trend="up" />
           <ResourceCounter icon={TrendingUp} label="Total" value={formatNumber(totalMined)} />
         </div>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-1 md:gap-2">
         {onRebirth && (
           <Button 
             onClick={onRebirth}
@@ -58,8 +58,8 @@ export default function TopResourceBar({
             size="sm"
             data-testid="button-rebirth"
           >
-            <Flame className="h-4 w-4 mr-2" />
-            Rebirth
+            <Flame className="h-4 w-4 md:mr-2" />
+            <span className="hidden md:inline">Rebirth</span>
           </Button>
         )}
         <Button 
