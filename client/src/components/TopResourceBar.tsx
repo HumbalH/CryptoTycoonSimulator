@@ -42,7 +42,7 @@ export default function TopResourceBar({
           </div>
         </div>
         {rebirthCount > 0 && (
-          <Badge className="bg-gradient-to-r from-orange-500 to-red-500 gap-1 text-[10px] lg:text-sm px-1.5 py-0.5 lg:px-2 lg:py-1 flex-shrink-0">
+          <Badge className="hidden lg:flex bg-gradient-to-r from-orange-500 to-red-500 gap-1 text-[10px] lg:text-sm px-1.5 py-0.5 lg:px-2 lg:py-1 flex-shrink-0">
             <Flame className="h-3 w-3" />
             <span className="hidden lg:inline">Rebirth {rebirthCount}</span>
             <span className="lg:hidden">{rebirthCount}</span>
@@ -55,6 +55,12 @@ export default function TopResourceBar({
         </div>
       </div>
       <div className="flex gap-1 items-center flex-shrink-0">
+        {rebirthCount > 0 && (
+          <Badge className="lg:hidden bg-gradient-to-r from-orange-500 to-red-500 gap-1 text-[10px] px-1.5 py-0.5">
+            <Flame className="h-3 w-3" />
+            <span>{rebirthCount}</span>
+          </Badge>
+        )}
         {onRebirth && (
           <Button 
             onClick={onRebirth}
