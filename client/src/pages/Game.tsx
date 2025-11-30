@@ -54,7 +54,7 @@ export default function Game() {
         icon: 'budget'
       },
       token: 'bitblitz',
-      position: [-2, 0.6, -2],
+      position: [-2, 0, -2],
       pendingEarnings: 0
     }
   ]);
@@ -533,7 +533,7 @@ export default function Game() {
     const gridPositions: [number, number, number][] = [];
     for (let x = -roomSize + 2; x < roomSize - 2; x += 2) {
       for (let z = -roomSize + 2; z < roomSize - 2; z += 2) {
-        gridPositions.push([x, pc.icon === 'budget' ? 0.6 : pc.icon === 'gaming' ? 0.8 : 1.0, z]);
+        gridPositions.push([x, 0, z]);
       }
     }
     
@@ -669,7 +669,7 @@ export default function Game() {
       id: 'pc-1',
       type: availablePCs[0],
       token: 'bitblitz',
-      position: [-2, 0.6, -2],
+      position: [-2, 0, -2],
       pendingEarnings: 0
     }]);
     setOwnedWorkers([]);
@@ -775,9 +775,9 @@ export default function Game() {
         />
         
         {/* Mobile floating menu buttons */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-2 z-50 bg-gradient-to-t from-background via-background to-transparent">
-          <div className="bg-card/95 backdrop-blur-md border-2 border-primary/30 rounded-xl p-2 shadow-2xl">
-            <div className="grid grid-cols-5 gap-1">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-1 lg:p-2 z-50 bg-gradient-to-t from-background via-background to-transparent">
+          <div className="bg-card/95 backdrop-blur-md border-2 border-primary/30 rounded-xl p-1.5 shadow-2xl">
+            <div className="grid grid-cols-5 gap-0.5">
               <Button
                 variant="ghost"
                 className="flex flex-col gap-1 h-auto py-2"
@@ -867,51 +867,6 @@ export default function Game() {
                 </div>
               </div>
             )}
-          </div>
-        }
-        buildDecorationsContent={
-          <div className="space-y-2">
-            <h3 className="font-bold font-mono text-sm mb-2">Room & Decorations</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-              {upgrades.filter(u => u.category === 'room').map(upgrade => (
-                <UpgradeCard 
-                  key={upgrade.id}
-                  upgrade={upgrade}
-                  canAfford={cash >= upgrade.cost}
-                  onPurchase={handleUpgrade}
-                />
-              ))}
-            </div>
-          </div>
-        }
-        buildUtilityContent={
-          <div className="space-y-2">
-            <div>
-              <h3 className="font-bold font-mono text-sm mb-2">Utility Upgrades</h3>
-              <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
-                {upgrades.filter(u => ['pc', 'worker', 'passive'].includes(u.category)).map(upgrade => (
-                  <UpgradeCard 
-                    key={upgrade.id}
-                    upgrade={upgrade}
-                    canAfford={cash >= upgrade.cost}
-                    onPurchase={handleUpgrade}
-                  />
-                ))}
-              </div>
-            </div>
-            <div className="border-t border-card-border pt-2">
-              <h3 className="font-bold font-mono text-sm mb-2">Hire Workers</h3>
-              <div className="grid grid-cols-3 gap-2">
-                {availableWorkers.map(worker => (
-                  <WorkerCard 
-                    key={worker.id}
-                    worker={worker}
-                    canAfford={cash >= worker.cost}
-                    onHire={handleHireWorker}
-                  />
-                ))}
-              </div>
-            </div>
           </div>
         }
         upgradeContent={
