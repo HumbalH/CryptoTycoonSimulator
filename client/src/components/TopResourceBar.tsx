@@ -48,7 +48,7 @@ export default function TopResourceBar({
             </Badge>
           )}
         </div>
-        <div className="hidden lg:flex gap-4">
+        <div className="flex lg:gap-4 gap-2">
           <ResourceCounter icon={DollarSign} label="Cash" value={formatNumber(cash)} />
           <ResourceCounter icon={Zap} label="Rate/s" value={`${formatNumber(miningRate)} (${earningsMultiplier.toFixed(1)}x)`} trend="up" />
           <ResourceCounter icon={TrendingUp} label="Total" value={formatNumber(totalMined)} />

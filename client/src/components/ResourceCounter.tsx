@@ -16,13 +16,13 @@ export default function ResourceCounter({ icon: Icon, label, value, trend, class
   };
 
   return (
-    <div className={`flex items-center gap-2 ${className}`} data-testid={`counter-${label.toLowerCase().replace(/\s/g, '-')}`}>
-      <div className="p-2 rounded-md bg-card border border-card-border">
-        <Icon className="h-5 w-5 text-primary" />
+    <div className={`flex items-center gap-1 lg:gap-2 ${className}`} data-testid={`counter-${label.toLowerCase().replace(/\s/g, '-')}`}>
+      <div className="p-1 lg:p-2 rounded-md bg-card border border-card-border">
+        <Icon className="h-3 w-3 lg:h-5 lg:w-5 text-primary" />
       </div>
       <div className="flex flex-col">
-        <span className="text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</span>
-        <span className={`text-lg font-bold font-mono ${trend ? trendColors[trend] : 'text-foreground'}`}>
+        <span className="text-[8px] lg:text-xs text-muted-foreground font-medium uppercase tracking-wide">{label}</span>
+        <span className={`text-xs lg:text-lg font-bold font-mono ${trend ? trendColors[trend] : 'text-foreground'}`}>
           {value}
         </span>
       </div>
