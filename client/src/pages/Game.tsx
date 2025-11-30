@@ -475,7 +475,7 @@ export default function Game() {
   // Random celebrity visits - unlock based on earnings
   useEffect(() => {
     const celebInterval = setInterval(() => {
-      if (Math.random() > 0.7) { // Temporarily increased for testing - will be 0.93 normally
+      if (Math.random() > 0.93) {
         // Celebrity pool that grows as you earn more
         // Bonuses are based on current mining rate
         const currentRate = totalMiningRate * earningsMultiplier;
