@@ -753,7 +753,7 @@ export default function Game() {
   }));
 
   return (
-    <div className="h-screen flex flex-col bg-background" data-testid="game-page">
+    <div className="h-screen flex flex-col bg-background overflow-hidden" data-testid="game-page">
       <TopResourceBar 
         cash={cash}
         miningRate={totalMiningRate}
@@ -766,7 +766,7 @@ export default function Game() {
         onRebirth={() => setShowRebirthModal(true)}
       />
 
-      <div className="flex-1 relative">
+      <div className="flex-1 relative overflow-hidden">
         <GameCanvas 
           pcs={scenePCs} 
           workers={ownedWorkers}
@@ -775,8 +775,8 @@ export default function Game() {
         />
         
         {/* Mobile floating menu buttons */}
-        <div className="lg:hidden fixed bottom-4 left-0 right-0 px-4 z-50">
-          <div className="bg-card/90 backdrop-blur-md border-2 border-primary/30 rounded-xl p-2 shadow-2xl">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-2 z-50 bg-gradient-to-t from-background via-background to-transparent">
+          <div className="bg-card/95 backdrop-blur-md border-2 border-primary/30 rounded-xl p-2 shadow-2xl">
             <div className="grid grid-cols-5 gap-1">
               <Button
                 variant="ghost"

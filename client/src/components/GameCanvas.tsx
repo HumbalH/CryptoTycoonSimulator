@@ -525,12 +525,14 @@ export default function GameCanvas({ pcs = [], workers = [], roomSize = 10, onPC
           <OrbitControls 
             enablePan={true}
             enableZoom={true}
-            enableRotate={false}
+            enableRotate={true}
             minPolarAngle={0.3}
             maxPolarAngle={1.2}
             minDistance={12}
             maxDistance={35}
             target={[0, 0, 0]}
+            panSpeed={1.5}
+            rotateSpeed={0.5}
           />
           
           {/* Lighting */}
