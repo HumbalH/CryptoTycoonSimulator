@@ -38,10 +38,10 @@ export default function TopResourceBar({
         <div className="flex items-center gap-1 lg:gap-2">
           <div className="flex flex-col">
             <h1 className="text-sm lg:text-2xl font-bold font-mono text-primary leading-tight">CRYPTO MINE</h1>
-            <span className="text-[8px] lg:text-[10px] text-muted-foreground leading-none">v0.8.0 {rebirthCount > 0 && `• R${rebirthCount}`}</span>
+            <span className="text-[8px] lg:text-[10px] text-muted-foreground leading-none">v0.8.0</span>
           </div>
           {rebirthCount > 0 && (
-            <Badge className="hidden lg:flex bg-gradient-to-r from-orange-500 to-red-500 gap-1 text-xs lg:text-sm px-1 lg:px-2">
+            <Badge className="bg-gradient-to-r from-orange-500 to-red-500 gap-1 text-xs lg:text-sm px-1 lg:px-2">
               <Flame className="h-2 w-2 lg:h-3 lg:w-3" />
               <span className="hidden lg:inline">Rebirth {rebirthCount}</span>
               <span className="lg:hidden">{rebirthCount}</span>
