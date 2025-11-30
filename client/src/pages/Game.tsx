@@ -54,7 +54,7 @@ export default function Game() {
         icon: 'budget'
       },
       token: 'bitblitz',
-      position: [-2, -2.5, -2],
+      position: [-2, 0, -2],
       pendingEarnings: 0
     }
   ]);
@@ -669,7 +669,7 @@ export default function Game() {
       id: 'pc-1',
       type: availablePCs[0],
       token: 'bitblitz',
-      position: [-2, -2.5, -2],
+      position: [-2, 0, -2],
       pendingEarnings: 0
     }]);
     setOwnedWorkers([]);
