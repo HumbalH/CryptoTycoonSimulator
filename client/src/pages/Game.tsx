@@ -352,7 +352,59 @@ export default function Game() {
         if (state.activeToken) {
           setActiveToken(state.activeToken);
         }
-        setLastLogout(state.lastLogout || Date.now());
+        
+        // Calculate offline earnings
+        const lastLogoutTime = state.lastLogout || Date.now();
+        setLastLogout(lastLogoutTime);
+        
+        const timeAwayMs = Date.now() - lastLogoutTime;
+        const timeAwaySeconds = Math.floor(timeAwayMs / 1000);
+        
+        // Only show offline earnings if away for more than 1 minute
+        if (timeAwaySeconds > 60 && state.ownedPCs && state.ownedPCs.length > 0) {
+          // Calculate total mining rate
+          let offlineRate = 0;
+          state.ownedPCs.forEach((pc: any) => {
+            const tokensPerSecond = pc.type?.miningRate || 1;
+            const cashPerToken = 10; // Use base token value for offline
+            offlineRate += tokensPerSecond * cashPerToken;
+          });
+          
+          // Apply rebirth multiplier
+          const rebirthMultiplier = 1 + ((state.rebirthCount || 0) * 0.1);
+          offlineRate *= rebirthMultiplier;
+          
+          // Tiered offline earnings: 0.3x for first 3 hours, 0.2x for next 3 hours, 0.1x for next 18 hours (max 24 hours total)
+          let earnings = 0;
+          const maxOfflineTime = 24 * 60 * 60; // 24 hours in seconds
+          const effectiveTime = Math.min(timeAwaySeconds, maxOfflineTime);
+          
+          const tier1Time = 3 * 60 * 60; // First 3 hours
+          const tier2Time = 6 * 60 * 60; // Up to 6 hours total
+          
+          if (effectiveTime <= tier1Time) {
+            // First 3 hours at 0.3x
+            earnings = Math.floor(offlineRate * effectiveTime * 0.3);
+          } else if (effectiveTime <= tier2Time) {
+            // First 3 hours at 0.3x + next hours at 0.2x
+            const tier1Earnings = Math.floor(offlineRate * tier1Time * 0.3);
+            const tier2Earnings = Math.floor(offlineRate * (effectiveTime - tier1Time) * 0.2);
+            earnings = tier1Earnings + tier2Earnings;
+          } else {
+            // First 3 hours at 0.3x + next 3 hours at 0.2x + remaining at 0.1x
+            const tier1Earnings = Math.floor(offlineRate * tier1Time * 0.3);
+            const tier2Earnings = Math.floor(offlineRate * (tier2Time - tier1Time) * 0.2);
+            const tier3Earnings = Math.floor(offlineRate * (effectiveTime - tier2Time) * 0.1);
+            earnings = tier1Earnings + tier2Earnings + tier3Earnings;
+          }
+          
+          if (earnings > 0) {
+            setOfflineEarningsAmount(earnings);
+            setCash(prev => prev + earnings);
+            setTotalMined(prev => prev + earnings);
+            setShowOfflineEarningsModal(true);
+          }
+        }
       } catch (err) {
         console.error('Failed to load game state:', err);
       }
@@ -425,14 +477,17 @@ export default function Game() {
     const celebInterval = setInterval(() => {
       if (Math.random() > 0.93) {
         // Celebrity pool that grows as you earn more
+        // Bonuses are based on current mining rate
+        const currentRate = totalMiningRate * earningsMultiplier;
+        
         const baseCelebrities = [
-          { id: '1', name: 'Crypto King', title: 'Legendary Investor', bonus: 35000, boostDuration: 30, boostMultiplier: 2 }
+          { id: '1', name: 'Crypto King', title: 'Legendary Investor', bonus: Math.floor(currentRate * 100), boostDuration: 30, boostMultiplier: 2 }
         ];
         
         const unlockedCelebrities = [
-          ...(totalMined >= 50000 ? [{ id: '2', name: 'Hash Master', title: 'Mining Pioneer', bonus: 55000, boostDuration: 20, boostMultiplier: 1.5 }] : []),
-          ...(totalMined >= 300000 ? [{ id: '3', name: 'Blockchain Baron', title: 'Tech Visionary', bonus: 125000, boostDuration: 60, boostMultiplier: 3 }] : []),
-          ...(totalMined >= 1000000 ? [{ id: '4', name: 'NFT Mogul', title: 'Digital Tycoon', bonus: 250000, boostDuration: 45, boostMultiplier: 2.5 }] : [])
+          ...(totalMined >= 50000 ? [{ id: '2', name: 'Hash Master', title: 'Mining Pioneer', bonus: Math.floor(currentRate * 200), boostDuration: 20, boostMultiplier: 1.5 }] : []),
+          ...(totalMined >= 300000 ? [{ id: '3', name: 'Blockchain Baron', title: 'Tech Visionary', bonus: Math.floor(currentRate * 300), boostDuration: 60, boostMultiplier: 3 }] : []),
+          ...(totalMined >= 1000000 ? [{ id: '4', name: 'NFT Mogul', title: 'Digital Tycoon', bonus: Math.floor(currentRate * 400), boostDuration: 45, boostMultiplier: 2.5 }] : [])
         ];
         
         const allCelebrities = [...baseCelebrities, ...unlockedCelebrities];
@@ -443,7 +498,7 @@ export default function Game() {
     }, 10000);
 
     return () => clearInterval(celebInterval);
-  }, [totalMined]);
+  }, [totalMined, totalMiningRate, earningsMultiplier]);
 
   // Update token unlocks when rebirth count changes
   useEffect(() => {
@@ -1277,16 +1332,18 @@ export default function Game() {
       <Dialog open={showOfflineEarningsModal} onOpenChange={setShowOfflineEarningsModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl">Welcome Back!</DialogTitle>
-            <DialogDescription>Your mining operation was working while you were away</DialogDescription>
+            <DialogTitle className="text-2xl lg:text-3xl text-center">Welcome Back! 👋</DialogTitle>
+            <DialogDescription className="text-center">
+              Your mining operation was working while you were away
+            </DialogDescription>
           </DialogHeader>
           
           <div className="bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg p-6 border-2 border-primary/50 my-4">
-            <p className="text-center text-sm text-muted-foreground mb-2">Offline Earnings (10% of normal rate)</p>
+            <p className="text-center text-sm text-muted-foreground mb-2">Offline Earnings (0.3x → 0.2x → 0.1x, max 24h)</p>
             <p className="text-center text-4xl font-bold text-primary">${offlineEarningsAmount.toLocaleString()}</p>
           </div>
 
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-center text-muted-foreground">
             Your PCs earned money automatically while you were gone. This amount has been added to your cash!
           </p>
 
@@ -1296,7 +1353,7 @@ export default function Game() {
               data-testid="button-offline-earnings-ok"
               className="w-full"
             >
-              Thanks!
+              Awesome!
             </Button>
           </DialogFooter>
         </DialogContent>
