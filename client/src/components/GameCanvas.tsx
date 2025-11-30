@@ -122,13 +122,13 @@ function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCPr
       </mesh>
 
       {/* Base Platform */}
-      <mesh position={[0, -0.45, 0]}>
+      <mesh position={[0, 0.05, 0]}>
         <cylinderGeometry args={[width * 0.8, width * 0.9, 0.1, 8]} />
         <meshStandardMaterial color="#1a1a2e" metalness={0.8} roughness={0.2} />
       </mesh>
 
       {/* Main PC Tower */}
-      <mesh castShadow position={[0, height / 2 - 0.4, 0]}>
+      <mesh castShadow position={[0, height / 2 + 0.1, 0]}>
         {shape === 'flat' ? (
           <boxGeometry args={[width, height * 0.6, depth]} />
         ) : shape === 'aggressive' ? (
@@ -152,7 +152,7 @@ function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCPr
       </mesh>
 
       {/* Front Panel Glow */}
-      <mesh position={[0, height / 2 - 0.4, depth / 2 + 0.02]}>
+      <mesh position={[0, height / 2 + 0.1, depth / 2 + 0.02]}>
         <planeGeometry args={[width * 0.85, Math.max(height * 0.7, 0.3)]} />
         <meshStandardMaterial 
           color={isActive ? color : '#000000'}
@@ -166,11 +166,11 @@ function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCPr
       {/* RGB LED Strips - Gaming & Premium Types */}
       {(type === 'gaming' || type === 'quantum') && isActive && (
         <>
-          <mesh position={[-width / 2 - 0.02, height / 2 - 0.4, 0]}>
+          <mesh position={[-width / 2 - 0.02, height / 2 + 0.1, 0]}>
             <boxGeometry args={[0.03, height * 0.9, depth * 0.25]} />
             <meshStandardMaterial color="#ff00ff" emissive="#ff00ff" emissiveIntensity={1.3} />
           </mesh>
-          <mesh position={[width / 2 + 0.02, height / 2 - 0.4, 0]}>
+          <mesh position={[width / 2 + 0.02, height / 2 + 0.1, 0]}>
             <boxGeometry args={[0.03, height * 0.9, depth * 0.25]} />
             <meshStandardMaterial color="#00ffff" emissive="#00ffff" emissiveIntensity={1.3} />
           </mesh>
@@ -179,7 +179,7 @@ function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCPr
 
       {/* Quantum Glow Ring - Quantum Type Only */}
       {type === 'quantum' && isActive && (
-        <mesh position={[0, height / 2 - 0.4, 0]}>
+        <mesh position={[0, height / 2 + 0.1, 0]}>
           <torusGeometry args={[width / 2 + 0.15, 0.05, 8, 16]} />
           <meshStandardMaterial color={color} emissive={color} emissiveIntensity={2.5} />
         </mesh>
@@ -188,14 +188,14 @@ function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCPr
       {/* Vents/Grills - More for server/rack types */}
       {shape === 'rack' ? (
         [0.5, 0.15, -0.15, -0.5].map((yOffset, i) => (
-          <mesh key={i} position={[0, height / 2 - 0.4 + yOffset, depth / 2 + 0.01]}>
+          <mesh key={i} position={[0, height / 2 + 0.1 + yOffset, depth / 2 + 0.01]}>
             <boxGeometry args={[width * 0.8, 0.08, 0.02]} />
             <meshStandardMaterial color="#0a0a0a" metalness={0.6} />
           </mesh>
         ))
       ) : (
         [0.3, 0, -0.3].map((yOffset, i) => (
-          <mesh key={i} position={[0, height / 2 - 0.4 + yOffset, depth / 2 + 0.01]}>
+          <mesh key={i} position={[0, height / 2 + 0.1 + yOffset, depth / 2 + 0.01]}>
             <boxGeometry args={[width * 0.65, 0.08, 0.02]} />
             <meshStandardMaterial color="#0a0a0a" />
           </mesh>
@@ -205,10 +205,10 @@ function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCPr
       {/* Mining particles and effects */}
       {isActive && (
         <>
-          <FloatingCoin position={[0, height - 0.4, 0]} />
-          <MiningParticles position={[0, height / 2 - 0.4, 0]} count={4} />
+          <FloatingCoin position={[0, height + 0.1, 0]} />
+          <MiningParticles position={[0, height / 2 + 0.1, 0]} count={4} />
           <pointLight 
-            position={[0, height / 2 - 0.4, 0]} 
+            position={[0, height / 2 + 0.1, 0]} 
             color={color}
             intensity={glowIntensity}
             distance={3}
@@ -217,7 +217,7 @@ function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCPr
       )}
 
       {/* Power/Status Light */}
-      <mesh position={[width / 2 - 0.1, height - 0.4 - 0.2, depth / 2 + 0.02]}>
+      <mesh position={[width / 2 - 0.1, height + 0.1 - 0.2, depth / 2 + 0.02]}>
         <sphereGeometry args={[0.05, 16, 16]} />
         <meshStandardMaterial 
           color={isActive ? '#00ff00' : '#ff0000'}

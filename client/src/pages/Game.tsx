@@ -54,7 +54,7 @@ export default function Game() {
         icon: 'budget'
       },
       token: 'bitblitz',
-      position: [-2, -0.5, -2],
+      position: [-2, 0.1, -2],
       pendingEarnings: 0
     }
   ]);
@@ -533,7 +533,7 @@ export default function Game() {
     const gridPositions: [number, number, number][] = [];
     for (let x = -roomSize + 2; x < roomSize - 2; x += 2) {
       for (let z = -roomSize + 2; z < roomSize - 2; z += 2) {
-        gridPositions.push([x, 0, z]);
+        gridPositions.push([x, 0.1, z]);
       }
     }
     
@@ -669,7 +669,7 @@ export default function Game() {
       id: 'pc-1',
       type: availablePCs[0],
       token: 'bitblitz',
-      position: [-2, -0.5, -2],
+      position: [-2, 0.1, -2],
       pendingEarnings: 0
     }]);
     setOwnedWorkers([]);
