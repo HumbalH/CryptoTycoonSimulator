@@ -385,7 +385,7 @@ function NPCs({ roomSize }: { roomSize: number }) {
   return (
     <>
       {npcPositions.map((_, i) => (
-        <group key={`npc-${i}`} ref={(ref) => { if (ref) npcRefs.current[i] = ref; }} position={[npcPositions[i].x, 0, npcPositions[i].z]}>
+        <group key={`npc-${i}`} ref={(ref) => { if (ref) npcRefs.current[i] = ref; }} position={[npcPositions[i].x, -2.5, npcPositions[i].z]}>
           {/* Body */}
           <mesh position={[0, 0.35, 0]}>
             <boxGeometry args={[0.3, 0.5, 0.3]} />
@@ -480,7 +480,7 @@ function Floor({ size }: { size: number }) {
   return (
     <>
       {/* Main floor - vibrant grass green */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -2.5, 0]} receiveShadow>
         <planeGeometry args={[size * 2, size * 2]} />
         <meshStandardMaterial 
           color="#2ecc71"

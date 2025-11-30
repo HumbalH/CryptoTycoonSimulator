@@ -54,7 +54,7 @@ export default function Game() {
         icon: 'budget'
       },
       token: 'bitblitz',
-      position: [-2, 0, -2],
+      position: [-2, -2.5, -2],
       pendingEarnings: 0
     }
   ]);
@@ -669,7 +669,7 @@ export default function Game() {
       id: 'pc-1',
       type: availablePCs[0],
       token: 'bitblitz',
-      position: [-2, 0, -2],
+      position: [-2, -2.5, -2],
       pendingEarnings: 0
     }]);
     setOwnedWorkers([]);
@@ -1313,34 +1313,34 @@ export default function Game() {
       />
 
       <Dialog open={showRebirthModal} onOpenChange={setShowRebirthModal}>
-        <DialogContent>
+        <DialogContent className="max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-primary">Rebirth Available</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-xl lg:text-2xl font-bold text-primary">Rebirth Available</DialogTitle>
+            <DialogDescription className="text-sm">
               Reset your progress but gain permanent earnings multiplier
             </DialogDescription>
           </DialogHeader>
           
-          <div className="space-y-4 py-4">
-            <div className="bg-card/60 border border-primary/20 rounded-lg p-4 space-y-3">
+          <div className="space-y-3 lg:space-y-4 py-2 lg:py-4">
+            <div className="bg-card/60 border border-primary/20 rounded-lg p-3 lg:p-4 space-y-2 lg:space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Current Rebirths:</span>
-                <Badge className="bg-primary">{rebirthCount}</Badge>
+                <span className="text-sm lg:text-base text-muted-foreground">Current Rebirths:</span>
+                <Badge className="bg-primary text-xs lg:text-sm">{rebirthCount}</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">Current Multiplier:</span>
-                <Badge variant="outline">{earningsMultiplier.toFixed(1)}x</Badge>
+                <span className="text-sm lg:text-base text-muted-foreground">Current Multiplier:</span>
+                <Badge variant="outline" className="text-xs lg:text-sm">{earningsMultiplier.toFixed(1)}x</Badge>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-muted-foreground">New Multiplier:</span>
-                <Badge className="bg-secondary">{(1 + ((rebirthCount + 1) * 0.1)).toFixed(1)}x</Badge>
+                <span className="text-sm lg:text-base text-muted-foreground">New Multiplier:</span>
+                <Badge className="bg-secondary text-xs lg:text-sm">{(1 + ((rebirthCount + 1) * 0.1)).toFixed(1)}x</Badge>
               </div>
-              <div className="pt-3 border-t border-primary/10">
+              <div className="pt-2 lg:pt-3 border-t border-primary/10">
                 <div className="flex justify-between items-center">
-                  <span className="text-lg font-bold">Cost:</span>
-                  <span className="text-lg font-bold text-accent">${rebirthCost.toLocaleString()}</span>
+                  <span className="text-base lg:text-lg font-bold">Cost:</span>
+                  <span className="text-base lg:text-lg font-bold text-accent">${rebirthCost.toLocaleString()}</span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">You have: ${cash.toLocaleString()}</p>
+                <p className="text-xs text-muted-foreground mt-1 lg:mt-2">You have: ${cash.toLocaleString()}</p>
               </div>
             </div>
 
