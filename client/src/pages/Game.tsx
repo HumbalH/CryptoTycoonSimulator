@@ -12,8 +12,9 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from '@/hooks/use-toast';
-import { Expand, Zap } from 'lucide-react';
+import { Expand, Zap, Hammer, Wrench, Users, Coins, Star } from 'lucide-react';
 import bitblitzIcon from '@assets/generated_images/bitblitz_crypto_token_icon.png';
 
 export default function Game() {
@@ -34,6 +35,9 @@ export default function Game() {
   const [showOfflineEarningsModal, setShowOfflineEarningsModal] = useState(false);
   const [showTutorial, setShowTutorial] = useState(localStorage.getItem('tutorialCompleted') !== 'true');
   const [tutorialStep, setTutorialStep] = useState(0);
+  
+  // Mobile menu state
+  const [mobileMenuOpen, setMobileMenuOpen] = useState<string | null>(null);
 
   // PC state - todo: remove mock functionality
   const [ownedPCs, setOwnedPCs] = useState<Array<{ id: string; type: PCType; token: string; position: [number, number, number]; pendingEarnings: number }>>([
@@ -769,9 +773,59 @@ export default function Game() {
           roomSize={roomSize}
           onPCClick={handlePCClick}
         />
+        
+        {/* Mobile floating menu buttons */}
+        <div className="md:hidden fixed bottom-4 left-0 right-0 px-4 z-10">
+          <div className="bg-card/90 backdrop-blur-md border-2 border-primary/30 rounded-xl p-2 shadow-2xl">
+            <div className="grid grid-cols-5 gap-1">
+              <Button
+                variant="ghost"
+                className="flex flex-col gap-1 h-auto py-2"
+                onClick={() => setMobileMenuOpen('build')}
+              >
+                <Hammer className="h-5 w-5" />
+                <span className="text-xs">Build</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex flex-col gap-1 h-auto py-2"
+                onClick={() => setMobileMenuOpen('upgrade')}
+              >
+                <Wrench className="h-5 w-5" />
+                <span className="text-xs">Upgrade</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex flex-col gap-1 h-auto py-2"
+                onClick={() => setMobileMenuOpen('workers')}
+              >
+                <Users className="h-5 w-5" />
+                <span className="text-xs">Workers</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex flex-col gap-1 h-auto py-2"
+                onClick={() => setMobileMenuOpen('tokens')}
+              >
+                <Coins className="h-5 w-5" />
+                <span className="text-xs">Tokens</span>
+              </Button>
+              <Button
+                variant="ghost"
+                className="flex flex-col gap-1 h-auto py-2"
+                onClick={() => setMobileMenuOpen('celebrities')}
+              >
+                <Star className="h-5 w-5" />
+                <span className="text-xs">Stars</span>
+              </Button>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <BottomControlPanel 
+      {/* Desktop bottom panel - hidden on mobile */}
+      <div className="hidden md:block">
+        <BottomControlPanel 
         buildPCContent={
           <div className="space-y-4 overflow-y-auto max-h-[600px]">
             <div className="bg-card/60 border border-primary/20 rounded p-3">
@@ -1020,6 +1074,237 @@ export default function Game() {
           </Card>
         }
       />
+      </div>
+
+      {/* Mobile Sheet Modals */}
+      <Sheet open={mobileMenuOpen === 'build'} onOpenChange={(open) => !open && setMobileMenuOpen(null)}>
+        <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Hammer className="h-5 w-5" />
+              Build PCs
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            <div className="bg-card/60 border border-primary/20 rounded p-3">
+              <p className="text-xs text-muted-foreground font-mono">
+                <span className="text-primary font-bold">Worker Requirements:</span> 1 Technician per 5 PCs | 1 Engineer per 5 Gaming PCs | 1 Expert per 5 Server Racks
+              </p>
+            </div>
+            <div>
+              <h3 className="font-bold font-mono text-sm text-muted-foreground mb-2">Available PCs</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {availablePCs.map(pc => (
+                  <PCCard 
+                    key={pc.id}
+                    pc={pc}
+                    canAfford={cash >= pc.cost}
+                    onPurchase={handlePurchasePC}
+                  />
+                ))}
+              </div>
+            </div>
+            {ownedPCs.length > 0 && (
+              <div className="border-t border-card-border pt-3">
+                <h3 className="font-bold font-mono text-sm text-muted-foreground mb-2">Your PCs ({ownedPCs.length})</h3>
+                <div className="flex flex-wrap gap-2">
+                  {ownedPCs.map(pc => (
+                    <div key={pc.id} className="flex items-center gap-2 bg-card/60 border border-primary/30 rounded px-3 py-1">
+                      <span className="text-sm font-mono">{pc.type.name}</span>
+                      <Button 
+                        size="sm" 
+                        variant="ghost"
+                        className="h-5 w-5 p-0 text-destructive hover:text-destructive"
+                        onClick={() => handleDeletePC(pc.id)}
+                      >
+                        ✕
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={mobileMenuOpen === 'upgrade'} onOpenChange={(open) => !open && setMobileMenuOpen(null)}>
+        <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Wrench className="h-5 w-5" />
+              Upgrades
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            <div>
+              <h3 className="font-bold font-mono text-sm text-primary mb-2">PC Upgrades</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {upgrades.filter(u => u.category === 'pc').map(upgrade => (
+                  <UpgradeCard 
+                    key={upgrade.id}
+                    upgrade={upgrade}
+                    canAfford={cash >= upgrade.cost}
+                    onPurchase={handleUpgrade}
+                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-bold font-mono text-sm text-secondary mb-2">Worker Upgrades</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {upgrades.filter(u => u.category === 'worker').map(upgrade => (
+                  <UpgradeCard 
+                    key={upgrade.id}
+                    upgrade={upgrade}
+                    canAfford={cash >= upgrade.cost}
+                    onPurchase={handleUpgrade}
+                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-bold font-mono text-sm text-accent mb-2">Farm Expansion</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {upgrades.filter(u => u.category === 'room').map(upgrade => (
+                  <UpgradeCard 
+                    key={upgrade.id}
+                    upgrade={upgrade}
+                    canAfford={cash >= upgrade.cost}
+                    onPurchase={handleUpgrade}
+                  />
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 className="font-bold font-mono text-sm text-purple-400 mb-2">Passive Bonuses</h3>
+              <div className="grid grid-cols-2 gap-2">
+                {upgrades.filter(u => u.category === 'passive').map(upgrade => (
+                  <UpgradeCard 
+                    key={upgrade.id}
+                    upgrade={upgrade}
+                    canAfford={cash >= upgrade.cost}
+                    onPurchase={handleUpgrade}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={mobileMenuOpen === 'workers'} onOpenChange={(open) => !open && setMobileMenuOpen(null)}>
+        <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Hire Workers
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {availableWorkers.map(worker => (
+              <WorkerCard 
+                key={worker.id}
+                worker={worker}
+                canAfford={cash >= worker.cost}
+                onHire={handleHireWorker}
+              />
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={mobileMenuOpen === 'tokens'} onOpenChange={(open) => !open && setMobileMenuOpen(null)}>
+        <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Coins className="h-5 w-5" />
+              Token Market
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4 space-y-4">
+            <Badge variant="outline" className="w-full justify-center">
+              Switch Cost: ${Math.max(0, 1000 - ((upgrades.find(u => u.id === 'token-discount')?.currentLevel || 0) * 200)).toLocaleString()}
+            </Badge>
+            <div className="grid grid-cols-1 gap-3">
+              {tokens.map((token) => {
+                const tokenUnlockMap: Record<string, number> = {
+                  bitblitz: 0,
+                  gala: 1,
+                  bene: 2,
+                  sol: 3,
+                  eth: 4,
+                  btc: 5
+                };
+                const requiredRebirth = tokenUnlockMap[token.id];
+                
+                return (
+                  <TokenCard 
+                    key={token.id}
+                    token={token}
+                    isActive={activeToken === token.id}
+                    onClick={() => handleTokenSelect(token.id)}
+                    rebirthCount={rebirthCount}
+                    requiredRebirth={requiredRebirth > 0 ? requiredRebirth : undefined}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={mobileMenuOpen === 'celebrities'} onOpenChange={(open) => !open && setMobileMenuOpen(null)}>
+        <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              Celebrity Visits
+            </SheetTitle>
+          </SheetHeader>
+          <div className="mt-4">
+            <p className="text-muted-foreground mb-4 text-sm">
+              Famous crypto personalities may visit your mining farm! Unlock more by mining more.
+            </p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 p-3 bg-card/60 rounded border border-primary/20">
+                <span className="text-2xl">👑</span>
+                <div>
+                  <p className="text-sm font-bold">Crypto King</p>
+                  <p className="text-xs text-muted-foreground">Always available</p>
+                </div>
+              </div>
+              {totalMined >= 50000 && (
+                <div className="flex items-center gap-2 p-3 bg-card/60 rounded border border-primary/20">
+                  <span className="text-2xl">⚙️</span>
+                  <div>
+                    <p className="text-sm font-bold">Hash Master</p>
+                    <p className="text-xs text-muted-foreground">Unlocked at $50K mined</p>
+                  </div>
+                </div>
+              )}
+              {totalMined >= 300000 && (
+                <div className="flex items-center gap-2 p-3 bg-card/60 rounded border border-primary/20">
+                  <span className="text-2xl">💎</span>
+                  <div>
+                    <p className="text-sm font-bold">Blockchain Baron</p>
+                    <p className="text-xs text-muted-foreground">Unlocked at $300K mined</p>
+                  </div>
+                </div>
+              )}
+              {totalMined >= 1000000 && (
+                <div className="flex items-center gap-2 p-3 bg-card/60 rounded border border-primary/20">
+                  <span className="text-2xl">🎩</span>
+                  <div>
+                    <p className="text-sm font-bold">NFT Mogul</p>
+                    <p className="text-xs text-muted-foreground">Unlocked at $1M mined</p>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <CelebrityVisitModal 
         open={showCelebrityModal}
