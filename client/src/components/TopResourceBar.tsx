@@ -34,27 +34,27 @@ export default function TopResourceBar({
 
   return (
     <div className="h-12 lg:h-20 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 backdrop-blur-md border-b-2 border-primary/30 px-2 lg:px-6 py-1 lg:py-0 flex flex-row items-center justify-between gap-1 lg:gap-0 shadow-lg" data-testid="top-resource-bar">
-      <div className="flex items-center gap-1 lg:gap-6 overflow-hidden">
-        <div className="flex items-center gap-1 lg:gap-2">
+      <div className="flex items-center gap-1 lg:gap-6 overflow-x-auto">
+        <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
           <div className="flex flex-col">
             <h1 className="text-sm lg:text-2xl font-bold font-mono text-primary leading-tight">CRYPTO MINE</h1>
             <span className="text-[8px] lg:text-[10px] text-muted-foreground leading-none">v0.8.0</span>
           </div>
           {rebirthCount > 0 && (
-            <Badge className="bg-gradient-to-r from-orange-500 to-red-500 gap-1 text-xs lg:text-sm px-1 lg:px-2">
-              <Flame className="h-2 w-2 lg:h-3 lg:w-3" />
+            <Badge className="bg-gradient-to-r from-orange-500 to-red-500 gap-1 text-[10px] lg:text-sm px-1.5 py-0.5 lg:px-2 lg:py-1 flex-shrink-0">
+              <Flame className="h-3 w-3" />
               <span className="hidden lg:inline">Rebirth {rebirthCount}</span>
               <span className="lg:hidden">{rebirthCount}</span>
             </Badge>
           )}
         </div>
-        <div className="flex lg:gap-4 gap-2">
+        <div className="flex lg:gap-4 gap-2 flex-shrink-0">
           <ResourceCounter icon={DollarSign} label="Cash" value={formatNumber(cash)} />
           <ResourceCounter icon={Zap} label="Rate/s" value={`${formatNumber(miningRate)} (${earningsMultiplier.toFixed(1)}x)`} trend="up" />
           <ResourceCounter icon={TrendingUp} label="Total" value={formatNumber(totalMined)} />
         </div>
       </div>
-      <div className="flex gap-1 items-center">
+      <div className="flex gap-1 items-center flex-shrink-0">
         {onRebirth && (
           <Button 
             onClick={onRebirth}
