@@ -336,7 +336,12 @@ export default function Game() {
         setRoomSize(state.roomSize || 6);
         setRebirthCount(state.rebirthCount || 0);
         if (state.ownedPCs && state.ownedPCs.length > 0) {
-          setOwnedPCs(state.ownedPCs);
+          // Fix Y position for old PCs that might have Y=0 or other values
+          const fixedPCs = state.ownedPCs.map((pc: any) => ({
+            ...pc,
+            position: [pc.position[0], 0.1, pc.position[2]] as [number, number, number]
+          }));
+          setOwnedPCs(fixedPCs);
         }
         if (state.ownedWorkers && state.ownedWorkers.length > 0) {
           setOwnedWorkers(state.ownedWorkers);
