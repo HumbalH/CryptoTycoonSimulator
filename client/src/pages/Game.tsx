@@ -475,10 +475,10 @@ export default function Game() {
   // Random celebrity visits - unlock based on earnings
   useEffect(() => {
     const celebInterval = setInterval(() => {
-      if (Math.random() > 0.93) {
+      if (Math.random() > 0.93) { // 7% chance every 10 seconds
         // Celebrity pool that grows as you earn more
         // Bonuses are based on current mining rate
-        const currentRate = totalMiningRate * earningsMultiplier;
+        const currentRate = Math.max(totalMiningRate * earningsMultiplier, 100); // Ensure minimum bonus
         
         const baseCelebrities = [
           { id: '1', name: 'Crypto King', title: 'Legendary Investor', bonus: Math.floor(currentRate * 100), boostDuration: 30, boostMultiplier: 2 }

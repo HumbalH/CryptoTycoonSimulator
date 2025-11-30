@@ -37,31 +37,31 @@ export default function CelebrityVisitModal({ open, celebrity, onClose, onClaim 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md" data-testid="celebrity-visit-modal">
+      <DialogContent className="sm:max-w-md max-w-[90vw]" data-testid="celebrity-visit-modal">
         <DialogHeader>
-          <div className="flex items-center justify-center mb-4">
-            <div className="p-4 rounded-full bg-primary/10 border-2 border-primary">
-              <span className="text-6xl">{celebEmojis[Math.floor(Math.random() * celebEmojis.length)]}</span>
+          <div className="flex items-center justify-center mb-2 lg:mb-4">
+            <div className="p-2 lg:p-4 rounded-full bg-primary/10 border-2 border-primary">
+              <span className="text-4xl lg:text-6xl">{celebEmojis[Math.floor(Math.random() * celebEmojis.length)]}</span>
             </div>
           </div>
-          <DialogTitle className="text-center text-2xl font-bold font-mono">
+          <DialogTitle className="text-center text-lg lg:text-2xl font-bold font-mono">
             {celebrity.name} Visits!
           </DialogTitle>
-          <DialogDescription className="text-center text-base">
+          <DialogDescription className="text-center text-sm lg:text-base">
             {celebrity.title}
           </DialogDescription>
         </DialogHeader>
         
-        <div className="space-y-4 py-4">
-          <div className="flex flex-col items-center gap-3">
-            <Badge variant="default" className="text-lg px-4 py-2 gap-2">
-              <DollarSign className="h-5 w-5" />
+        <div className="space-y-2 lg:space-y-4 py-2 lg:py-4">
+          <div className="flex flex-col items-center gap-2 lg:gap-3">
+            <Badge variant="default" className="text-sm lg:text-lg px-3 lg:px-4 py-1 lg:py-2 gap-1 lg:gap-2">
+              <DollarSign className="h-4 w-4 lg:h-5 lg:w-5" />
               <span className="font-bold font-mono">{formatBonus(celebrity.bonus)} Bonus!</span>
             </Badge>
             
             {celebrity.boostDuration && celebrity.boostMultiplier && (
-              <Badge variant="outline" className="gap-2">
-                <Zap className="h-4 w-4" />
+              <Badge variant="outline" className="gap-1 lg:gap-2 text-xs lg:text-sm">
+                <Zap className="h-3 w-3 lg:h-4 lg:w-4" />
                 <span className="text-sm">
                   {celebrity.boostMultiplier}x boost for {celebrity.boostDuration}s
                 </span>
@@ -71,7 +71,7 @@ export default function CelebrityVisitModal({ open, celebrity, onClose, onClaim 
 
           <div className="flex items-center justify-center gap-1 text-yellow-500">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} className="h-5 w-5 fill-current" />
+              <Star key={i} className="h-4 w-4 lg:h-5 lg:w-5 fill-current" />
             ))}
           </div>
 
