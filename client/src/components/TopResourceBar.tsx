@@ -40,14 +40,14 @@ export default function TopResourceBar({
             <h1 className="text-sm lg:text-2xl font-bold font-mono text-primary leading-tight">CRYPTO MINE</h1>
             <span className="text-[8px] lg:text-[10px] text-muted-foreground leading-none">v0.8.0</span>
           </div>
-          {rebirthCount > 0 && (
-            <Badge className="bg-gradient-to-r from-orange-500 to-red-500 gap-1 text-[10px] lg:text-sm px-1.5 py-0.5 lg:px-2 lg:py-1 flex-shrink-0">
-              <Flame className="h-3 w-3" />
-              <span className="hidden lg:inline">Rebirth {rebirthCount}</span>
-              <span className="lg:hidden">{rebirthCount}</span>
-            </Badge>
-          )}
         </div>
+        {rebirthCount > 0 && (
+          <Badge className="bg-gradient-to-r from-orange-500 to-red-500 gap-1 text-[10px] lg:text-sm px-1.5 py-0.5 lg:px-2 lg:py-1 flex-shrink-0">
+            <Flame className="h-3 w-3" />
+            <span className="hidden lg:inline">Rebirth {rebirthCount}</span>
+            <span className="lg:hidden">{rebirthCount}</span>
+          </Badge>
+        )}
         <div className="flex lg:gap-4 gap-2 flex-shrink-0">
           <ResourceCounter icon={DollarSign} label="Cash" value={formatNumber(cash)} />
           <ResourceCounter icon={Zap} label="Rate/s" value={`${formatNumber(miningRate)} (${earningsMultiplier.toFixed(1)}x)`} trend="up" />
