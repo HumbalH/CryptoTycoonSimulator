@@ -775,7 +775,7 @@ export default function Game() {
         />
         
         {/* Mobile floating menu buttons */}
-        <div className="md:hidden fixed bottom-4 left-0 right-0 px-4 z-10">
+        <div className="md:hidden fixed bottom-4 left-0 right-0 px-4 z-50">
           <div className="bg-card/90 backdrop-blur-md border-2 border-primary/30 rounded-xl p-2 shadow-2xl">
             <div className="grid grid-cols-5 gap-1">
               <Button
@@ -1445,12 +1445,13 @@ export default function Game() {
       </Dialog>
 
       {/* Landscape orientation prompt for mobile */}
-      <div className="md:hidden portrait:flex hidden fixed inset-0 bg-background z-50 flex-col items-center justify-center p-6 text-center">
+      <div className="md:hidden portrait:flex hidden fixed inset-0 bg-background z-[60] flex-col items-center justify-center p-6 text-center">
         <div className="mb-6 text-6xl">📱</div>
         <h2 className="text-2xl font-bold mb-2">Rotate Your Device</h2>
         <p className="text-muted-foreground">
           For the best experience, please rotate your device to landscape mode
         </p>
+        <p className="text-xs text-muted-foreground mt-4">v1.5.0</p>
       </div>
     </div>
   );

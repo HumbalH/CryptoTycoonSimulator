@@ -36,7 +36,10 @@ export default function TopResourceBar({
     <div className="h-auto md:h-20 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 backdrop-blur-md border-b-2 border-primary/30 px-2 md:px-6 py-2 md:py-0 flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0 shadow-lg" data-testid="top-resource-bar">
       <div className="flex items-center gap-2 md:gap-6 w-full md:w-auto justify-between md:justify-start">
         <div className="flex items-center gap-2">
-          <h1 className="text-lg md:text-2xl font-bold font-mono text-primary">CRYPTO MINE</h1>
+          <div className="flex flex-col">
+            <h1 className="text-lg md:text-2xl font-bold font-mono text-primary">CRYPTO MINE</h1>
+            <span className="text-[10px] text-muted-foreground">v1.5.0</span>
+          </div>
           {rebirthCount > 0 && (
             <Badge className="bg-gradient-to-r from-orange-500 to-red-500 gap-1">
               <Flame className="h-3 w-3" />
