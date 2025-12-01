@@ -489,16 +489,6 @@ function Floor({ gridWidth, gridHeight }: { gridWidth: number; gridHeight: numbe
   const centerX = -5 + floorWidth / 2;
   const centerZ = -5 + floorDepth / 2;
   
-  // Wall positions - walls are set back from the floor edges for an open feel
-  const wallOffset = 1; // Distance from floor edge
-  const leftWallX = centerX - floorWidth / 2 - wallOffset;
-  const rightWallX = centerX + floorWidth / 2 + wallOffset;
-  const frontWallZ = centerZ - floorDepth / 2 - wallOffset;
-  
-  const wallHeight = 3;
-  const wallThickness = 0.2;
-  const doorWidth = 3; // Width of the door opening
-  
   return (
     <>
       {/* Main floor - vibrant grass green - represents unlocked land */}
@@ -509,30 +499,6 @@ function Floor({ gridWidth, gridHeight }: { gridWidth: number; gridHeight: numbe
           metalness={0.1}
           roughness={0.8}
         />
-      </mesh>
-
-      {/* Left wall */}
-      <mesh position={[leftWallX, wallHeight / 2, centerZ]} castShadow receiveShadow>
-        <boxGeometry args={[wallThickness, wallHeight, floorDepth + wallOffset * 2]} />
-        <meshStandardMaterial color="#7f8c8d" roughness={0.8} />
-      </mesh>
-
-      {/* Right wall */}
-      <mesh position={[rightWallX, wallHeight / 2, centerZ]} castShadow receiveShadow>
-        <boxGeometry args={[wallThickness, wallHeight, floorDepth + wallOffset * 2]} />
-        <meshStandardMaterial color="#7f8c8d" roughness={0.8} />
-      </mesh>
-
-      {/* Front wall (facing road) - left section */}
-      <mesh position={[centerX - doorWidth / 2 - (floorWidth / 2 - doorWidth / 2) / 2 - wallOffset / 2, wallHeight / 2, frontWallZ]} castShadow receiveShadow>
-        <boxGeometry args={[floorWidth / 2 - doorWidth / 2 + wallOffset, wallHeight, wallThickness]} />
-        <meshStandardMaterial color="#7f8c8d" roughness={0.8} />
-      </mesh>
-
-      {/* Front wall (facing road) - right section */}
-      <mesh position={[centerX + doorWidth / 2 + (floorWidth / 2 - doorWidth / 2) / 2 + wallOffset / 2, wallHeight / 2, frontWallZ]} castShadow receiveShadow>
-        <boxGeometry args={[floorWidth / 2 - doorWidth / 2 + wallOffset, wallHeight, wallThickness]} />
-        <meshStandardMaterial color="#7f8c8d" roughness={0.8} />
       </mesh>
 
       {/* Outer ground area - darker green */}
