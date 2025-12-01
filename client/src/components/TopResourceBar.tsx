@@ -33,8 +33,8 @@ export default function TopResourceBar({
   };
 
   return (
-    <div className="h-12 lg:h-20 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 backdrop-blur-md border-b-2 border-primary/30 px-2 lg:px-6 py-1 lg:py-0 flex flex-row items-center justify-between gap-1 lg:gap-0 shadow-lg" data-testid="top-resource-bar">
-      <div className="flex items-center gap-1 lg:gap-6 overflow-x-auto">
+    <div className="h-auto lg:h-20 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 backdrop-blur-md border-b-2 border-primary/30 px-2 lg:px-6 py-1 lg:py-0 flex portrait:flex-col landscape:flex-row lg:flex-row items-center justify-between gap-1 lg:gap-0 shadow-lg" data-testid="top-resource-bar">
+      <div className="flex items-center gap-1 lg:gap-6 portrait:w-full landscape:w-auto overflow-x-auto">
         <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
           <div className="flex flex-col">
             <h1 className="text-sm lg:text-2xl font-bold font-mono text-primary leading-tight">CRYPTO MINE</h1>
@@ -54,7 +54,7 @@ export default function TopResourceBar({
           <ResourceCounter icon={TrendingUp} label="Total" value={formatNumber(totalMined)} />
         </div>
       </div>
-      <div className="flex gap-1 items-center flex-shrink-0">
+      <div className="flex gap-1 items-center flex-shrink-0 portrait:w-full landscape:w-auto portrait:justify-end">
         {onRebirth && (
           <Button 
             onClick={onRebirth}

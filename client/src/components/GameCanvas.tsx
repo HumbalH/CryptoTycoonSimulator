@@ -486,8 +486,8 @@ function Floor({ gridWidth, gridHeight }: { gridWidth: number; gridHeight: numbe
   // Center position: Grid starts at [-5, -5], so center is offset from origin
   // For a grid of width W and depth D, the positions go from [-5, -5] to [-5+W*2, -5+D*2]
   // Center should be at the midpoint
-  const centerX = -5 + floorWidth / 2 + 1;
-  const centerZ = -5 + floorDepth / 2 + 1;
+  const centerX = -5 + floorWidth / 2 - 1;
+  const centerZ = -5 + floorDepth / 2 - 1;
   
   return (
     <>
