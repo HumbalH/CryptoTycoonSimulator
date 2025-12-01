@@ -34,7 +34,8 @@ export default function TopResourceBar({
 
   return (
     <div className="h-auto lg:h-20 bg-gradient-to-r from-primary/20 via-secondary/20 to-accent/20 backdrop-blur-md border-b-2 border-primary/30 px-2 lg:px-6 py-1 lg:py-0 flex portrait:flex-col landscape:flex-row lg:flex-row items-center justify-between gap-1 lg:gap-0 shadow-lg" data-testid="top-resource-bar">
-      <div className="flex items-center gap-1 lg:gap-6 portrait:w-full landscape:w-auto overflow-x-auto">
+      {/* First row on portrait: title, rebirth badge, and buttons */}
+      <div className="flex items-center portrait:justify-between portrait:w-full landscape:w-auto gap-1 lg:gap-6">
         <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
           <div className="flex flex-col">
             <h1 className="text-sm lg:text-2xl font-bold font-mono text-primary leading-tight">CRYPTO MINE</h1>
@@ -48,13 +49,49 @@ export default function TopResourceBar({
             </Badge>
           )}
         </div>
-        <div className="flex lg:gap-4 gap-2 flex-shrink-0">
-          <ResourceCounter icon={DollarSign} label="Cash" value={formatNumber(cash)} />
-          <ResourceCounter icon={Zap} label="Rate/s" value={`${formatNumber(miningRate)} (${earningsMultiplier.toFixed(1)}x)`} trend="up" />
-          <ResourceCounter icon={TrendingUp} label="Total" value={formatNumber(totalMined)} />
+        {/* Buttons on portrait first row, on landscape/desktop at end */}
+        <div className="flex gap-1 items-center flex-shrink-0 portrait:flex landscape:hidden">
+          {onRebirth && (
+            <Button 
+              onClick={onRebirth}
+              className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 h-8 lg:h-9 px-2 lg:px-3"
+              size="sm"
+              data-testid="button-rebirth"
+            >
+              <Flame className="h-3 w-3 lg:h-4 lg:w-4 lg:mr-2" />
+              <span className="hidden lg:inline">Rebirth</span>
+            </Button>
+          )}
+          <Button 
+            size="icon" 
+            variant="ghost"
+            onClick={onToggleDarkMode}
+            data-testid="button-toggle-theme"
+            className="h-8 w-8 lg:h-10 lg:w-10"
+          >
+            {isDarkMode ? <Sun className="h-4 w-4 lg:h-5 lg:w-5" /> : <Moon className="h-4 w-4 lg:h-5 lg:w-5" />}
+          </Button>
+          <Button 
+            size="icon" 
+            variant="ghost"
+            onClick={onSettings}
+            data-testid="button-settings"
+            className="h-8 w-8 lg:h-10 lg:w-10"
+          >
+            <Settings className="h-4 w-4 lg:h-5 lg:w-5" />
+          </Button>
         </div>
       </div>
-      <div className="flex gap-1 items-center flex-shrink-0 portrait:w-full landscape:w-auto portrait:justify-end">
+      
+      {/* Second row on portrait: cash, rate, total counters */}
+      <div className="flex lg:gap-4 gap-2 flex-shrink-0 portrait:w-full landscape:w-auto">
+        <ResourceCounter icon={DollarSign} label="Cash" value={formatNumber(cash)} />
+        <ResourceCounter icon={Zap} label="Rate/s" value={`${formatNumber(miningRate)} (${earningsMultiplier.toFixed(1)}x)`} trend="up" />
+        <ResourceCounter icon={TrendingUp} label="Total" value={formatNumber(totalMined)} />
+      </div>
+      
+      {/* Buttons on landscape/desktop */}
+      <div className="hidden landscape:flex lg:flex gap-1 items-center flex-shrink-0">
         {onRebirth && (
           <Button 
             onClick={onRebirth}
