@@ -5,12 +5,12 @@ export default function TokenCardExample() {
   const [activeToken, setActiveToken] = useState('bitblitz');
   
   const tokens = [
-    { id: 'bitblitz', name: 'BitBlitz', symbol: 'BitBlitz', profitRate: 10, trend: 'up' as const, unlocked: true },
-    { id: 'btc', name: 'Bitcoin', symbol: 'BTC', profitRate: 45, trend: 'up' as const, unlocked: true },
-    { id: 'eth', name: 'Ethereum', symbol: 'ETH', profitRate: 38, trend: 'down' as const, unlocked: true },
-    { id: 'sol', name: 'Solana', symbol: 'SOL', profitRate: 22, trend: 'neutral' as const, unlocked: true },
-    { id: 'gala', name: 'Gala', symbol: 'GALA', profitRate: 15, trend: 'up' as const, unlocked: false },
-    { id: 'bene', name: 'Bene', symbol: 'BENE', profitRate: 12, trend: 'neutral' as const, unlocked: false }
+    { id: 'bitblitz', name: 'BitBlitz', symbol: 'BitBlitz', profitRate: 10, basePrice: 10, trend: 'up' as const, unlocked: true },
+    { id: 'btc', name: 'Bitcoin', symbol: 'BTC', profitRate: 45, basePrice: 45, trend: 'up' as const, unlocked: true },
+    { id: 'eth', name: 'Ethereum', symbol: 'ETH', profitRate: 38, basePrice: 38, trend: 'down' as const, unlocked: true },
+    { id: 'sol', name: 'Solana', symbol: 'SOL', profitRate: 22, basePrice: 22, trend: 'neutral' as const, unlocked: true },
+    { id: 'gala', name: 'Gala', symbol: 'GALA', profitRate: 15, basePrice: 15, trend: 'up' as const, unlocked: false },
+    { id: 'bene', name: 'Bene', symbol: 'BENE', profitRate: 12, basePrice: 12, trend: 'neutral' as const, unlocked: false }
   ];
 
   return (
