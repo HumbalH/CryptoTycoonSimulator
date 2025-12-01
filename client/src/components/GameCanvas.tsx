@@ -483,9 +483,11 @@ function Floor({ gridWidth, gridHeight }: { gridWidth: number; gridHeight: numbe
   const floorWidth = gridWidth * 2;
   const floorDepth = gridHeight * 2;
   
-  // Center position: PC at [-3, -3] is the corner, so offset by half unit less
-  const centerX = -3 + floorWidth / 2 - 1;
-  const centerZ = -3 + floorDepth / 2 - 1;
+  // Center position: Grid starts at [-3, -3], so center is offset from origin
+  // For a grid of width W and depth D, the positions go from [-3, -3] to [-3+W*2, -3+D*2]
+  // Center should be at the midpoint
+  const centerX = -3 + floorWidth / 2;
+  const centerZ = -3 + floorDepth / 2;
   
   // Wall positions - walls are set back from the floor edges for an open feel
   const wallOffset = 1; // Distance from floor edge

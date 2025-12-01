@@ -346,11 +346,27 @@ export default function Game() {
         
         setRebirthCount(state.rebirthCount || 0);
         if (state.ownedPCs && state.ownedPCs.length > 0) {
-          // Fix Y position for old PCs that might have Y=0 or other values
-          const fixedPCs = state.ownedPCs.map((pc: any) => ({
-            ...pc,
-            position: [pc.position[0], 0.1, pc.position[2]] as [number, number, number]
-          }));
+          // Migrate old PC positions if coming from old roomSize system
+          const needsMigration = state.roomSize && !state.gridWidth && !state.gridHeight;
+          
+          const fixedPCs = state.ownedPCs.map((pc: any) => {
+            let newPosition = [pc.position[0], 0.1, pc.position[2]] as [number, number, number];
+            
+            // If migrating from old system, convert positions
+            // Old: -roomSize+2 to roomSize-2 (centered at 0)
+            // New: -3 to gridWidth*2-3 (starts at -3)
+            if (needsMigration && state.roomSize) {
+              const oldX = pc.position[0];
+              const oldZ = pc.position[2];
+              // Convert from old centered grid to new corner-based grid
+              newPosition = [oldX + 3, 0.1, oldZ + 3] as [number, number, number];
+            }
+            
+            return {
+              ...pc,
+              position: newPosition
+            };
+          });
           setOwnedPCs(fixedPCs);
         }
         if (state.ownedWorkers && state.ownedWorkers.length > 0) {
