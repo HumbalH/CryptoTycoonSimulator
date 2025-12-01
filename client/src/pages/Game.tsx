@@ -55,7 +55,7 @@ export default function Game() {
         icon: 'budget'
       },
       token: 'bitblitz',
-      position: [-7, 0.1, -7],
+      position: [-6, 0.1, -6],
       pendingEarnings: 0
     }
   ]);
@@ -354,13 +354,13 @@ export default function Game() {
             
             // If migrating from old system, convert positions
             // Old: -(roomSize-2) to +(roomSize-2) (centered at 0, step 2)
-            // New: -7 to gridWidth*2-7 (starts at -7, step 2)
+            // New: -6 to gridWidth*2-6 (starts at -6, step 2)
             if (needsMigration && state.roomSize) {
               const oldX = pc.position[0];
               const oldZ = pc.position[2];
               // Convert from old centered grid to new corner-based grid
-              // Shift by -4 to move left/up (old center 0 becomes new start -7, offset by 3 for first position)
-              newPosition = [oldX - 4, 0.1, oldZ - 4] as [number, number, number];
+              // Shift by -3 to move left/up
+              newPosition = [oldX - 3, 0.1, oldZ - 3] as [number, number, number];
             }
             
             return {
@@ -623,11 +623,11 @@ export default function Game() {
     setCash(prev => prev - pc.cost);
     
     // Optimized: Find first available position without generating full grid
-    // Grid matches floor position: starts at [-7, -7], expand right (gridWidth) and back (gridHeight)
+    // Grid matches floor position: starts at [-6, -6], expand right (gridWidth) and back (gridHeight)
     let foundPosition: [number, number, number] | null = null;
     
-    for (let x = -7; x < -7 + gridWidth * 2 && !foundPosition; x += 2) {
-      for (let z = -7; z < -7 + gridHeight * 2 && !foundPosition; z += 2) {
+    for (let x = -6; x < -6 + gridWidth * 2 && !foundPosition; x += 2) {
+      for (let z = -6; z < -6 + gridHeight * 2 && !foundPosition; z += 2) {
         const pos: [number, number, number] = [x, 0.1, z];
         // Check if this position is available
         const isOccupied = ownedPCs.some(owned => 
