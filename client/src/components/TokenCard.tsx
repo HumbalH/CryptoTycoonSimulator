@@ -8,6 +8,7 @@ export interface Token {
   name: string;
   symbol: string;
   profitRate: number;
+  basePrice: number;
   trend: "up" | "down" | "neutral";
   unlocked: boolean;
 }

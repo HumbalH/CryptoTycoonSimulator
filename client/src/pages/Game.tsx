@@ -27,7 +27,8 @@ export default function Game() {
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [celebrityVisit, setCelebrityVisit] = useState<Celebrity | null>(null);
   const [showCelebrityModal, setShowCelebrityModal] = useState(false);
-  const [roomSize, setRoomSize] = useState(6);
+  const [gridWidth, setGridWidth] = useState(3);
+  const [gridHeight, setGridHeight] = useState(3);
   const [rebirthCount, setRebirthCount] = useState(0);
   const [showRebirthModal, setShowRebirthModal] = useState(false);
   const [lastLogout, setLastLogout] = useState<number>(Date.now());
@@ -54,7 +55,7 @@ export default function Game() {
         icon: 'budget'
       },
       token: 'bitblitz',
-      position: [-2, 0.1, -2],
+      position: [-3, 0.1, -3],
       pendingEarnings: 0
     }
   ]);
@@ -190,12 +191,12 @@ export default function Game() {
   // Tokens - unlocked based on rebirths. Order: bitblitz -> gala -> bene -> sol -> eth -> btc
   // Prices roughly 2x of previous but with variance
   const [tokens, setTokens] = useState<Token[]>([
-    { id: 'bitblitz', name: 'BitBlitz', symbol: 'BitBlitz', profitRate: 10, trend: 'up', unlocked: true },
-    { id: 'gala', name: 'Gala', symbol: 'GALA', profitRate: 19, trend: 'up', unlocked: rebirthCount >= 1 },
-    { id: 'bene', name: 'Bene', symbol: 'BENE', profitRate: 38, trend: 'neutral', unlocked: rebirthCount >= 2 },
-    { id: 'sol', name: 'Solana', symbol: 'SOL', profitRate: 76, trend: 'neutral', unlocked: rebirthCount >= 3 },
-    { id: 'eth', name: 'Ethereum', symbol: 'ETH', profitRate: 148, trend: 'down', unlocked: rebirthCount >= 4 },
-    { id: 'btc', name: 'Bitcoin', symbol: 'BTC', profitRate: 290, trend: 'up', unlocked: rebirthCount >= 5 }
+    { id: 'bitblitz', name: 'BitBlitz', symbol: 'BitBlitz', profitRate: 10, basePrice: 10, trend: 'up', unlocked: true },
+    { id: 'gala', name: 'Gala', symbol: 'GALA', profitRate: 19, basePrice: 19, trend: 'up', unlocked: rebirthCount >= 1 },
+    { id: 'bene', name: 'Bene', symbol: 'BENE', profitRate: 38, basePrice: 38, trend: 'neutral', unlocked: rebirthCount >= 2 },
+    { id: 'sol', name: 'Solana', symbol: 'SOL', profitRate: 76, basePrice: 76, trend: 'neutral', unlocked: rebirthCount >= 3 },
+    { id: 'eth', name: 'Ethereum', symbol: 'ETH', profitRate: 148, basePrice: 148, trend: 'down', unlocked: rebirthCount >= 4 },
+    { id: 'btc', name: 'Bitcoin', symbol: 'BTC', profitRate: 290, basePrice: 290, trend: 'up', unlocked: rebirthCount >= 5 }
   ]);
 
   const [activeToken, setActiveToken] = useState('bitblitz');
@@ -260,11 +261,11 @@ export default function Game() {
     {
       id: "room-space",
       name: "Buy Space",
-      description: "Expand your mining area by 1x1 tile",
+      description: "Expand your mining area",
       cost: 20000,
       currentLevel: 0,
-      maxLevel: 100,
-      effect: "+1 room size per level",
+      maxLevel: 6,
+      effect: "Progression: 3x3→3x4→4x4→4x5→5x5→5x6→6x6",
       unlocked: true,
       category: "room"
     },
@@ -333,7 +334,8 @@ export default function Game() {
         const state = JSON.parse(gameState);
         setCash(state.cash || 20000);
         setTotalMined(state.totalMined || 0);
-        setRoomSize(state.roomSize || 6);
+        setGridWidth(state.gridWidth || 3);
+        setGridHeight(state.gridHeight || 3);
         setRebirthCount(state.rebirthCount || 0);
         if (state.ownedPCs && state.ownedPCs.length > 0) {
           // Fix Y position for old PCs that might have Y=0 or other values
@@ -417,7 +419,8 @@ export default function Game() {
       const gameState = {
         cash,
         totalMined,
-        roomSize,
+        gridWidth,
+        gridHeight,
         rebirthCount,
         ownedPCs,
         ownedWorkers,
@@ -441,7 +444,7 @@ export default function Game() {
       clearInterval(saveInterval);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
-  }, [cash, totalMined, roomSize, rebirthCount, ownedPCs, ownedWorkers, upgrades, activeToken]);
+  }, [cash, totalMined, gridWidth, gridHeight, rebirthCount, ownedPCs, ownedWorkers, upgrades, activeToken]);
 
   // Mining income - accumulate on PCs
   useEffect(() => {
@@ -508,12 +511,17 @@ export default function Game() {
     })));
   }, [rebirthCount]);
 
-  // Dynamic token prices - todo: remove mock functionality
+  // Dynamic token prices - constrained between 0.5x and 3x of base price
   useEffect(() => {
     const priceInterval = setInterval(() => {
       setTokens(prev => prev.map(token => {
+        const basePrice = token.basePrice || token.profitRate;
+        const minPrice = Math.floor(basePrice * 0.5);
+        const maxPrice = Math.floor(basePrice * 3);
+        
         const change = Math.floor(Math.random() * 11) - 5;
-        const newRate = Math.max(5, Math.floor(token.profitRate + change));
+        const newRate = Math.max(minPrice, Math.min(maxPrice, Math.floor(token.profitRate + change)));
+        
         return {
           ...token,
           profitRate: newRate,
@@ -589,27 +597,30 @@ export default function Game() {
 
     setCash(prev => prev - pc.cost);
     
-    // Add PC to owned with position in grid - todo: remove mock functionality
-    const gridPositions: [number, number, number][] = [];
-    for (let x = -roomSize + 2; x < roomSize - 2; x += 2) {
-      for (let z = -roomSize + 2; z < roomSize - 2; z += 2) {
-        gridPositions.push([x, 0.1, z]);
+    // Optimized: Find first available position without generating full grid
+    // Fixed starting point at [-3, -3], expand right (gridWidth) and back (gridHeight)
+    let foundPosition: [number, number, number] | null = null;
+    
+    for (let x = -3; x < -3 + gridWidth * 2 && !foundPosition; x += 2) {
+      for (let z = -3; z < -3 + gridHeight * 2 && !foundPosition; z += 2) {
+        const pos: [number, number, number] = [x, 0.1, z];
+        // Check if this position is available
+        const isOccupied = ownedPCs.some(owned => 
+          Math.abs(owned.position[0] - pos[0]) < 1.5 && 
+          Math.abs(owned.position[2] - pos[2]) < 1.5
+        );
+        if (!isOccupied) {
+          foundPosition = pos;
+        }
       }
     }
-    
-    const availablePositions = gridPositions.filter(pos => 
-      !ownedPCs.some(owned => 
-        Math.abs(owned.position[0] - pos[0]) < 1.5 && 
-        Math.abs(owned.position[2] - pos[2]) < 1.5
-      )
-    );
 
-    if (availablePositions.length > 0) {
+    if (foundPosition) {
       setOwnedPCs(prev => [...prev, {
         id: `pc-${Date.now()}`,
         type: pc,
         token: activeToken,
-        position: availablePositions[0],
+        position: foundPosition,
         pendingEarnings: 0
       }]);
 
@@ -729,11 +740,12 @@ export default function Game() {
       id: 'pc-1',
       type: availablePCs[0],
       token: 'bitblitz',
-      position: [-2, 0.1, -2],
+      position: [-3, 0.1, -3],
       pendingEarnings: 0
     }]);
     setOwnedWorkers([]);
-    setRoomSize(6);
+    setGridWidth(3);
+    setGridHeight(3);
     setActiveToken('bitblitz');
     setRebirthCount(prev => prev + 1);
     setShowRebirthModal(false);
@@ -744,25 +756,6 @@ export default function Game() {
     });
   };
 
-  const handleExpandRoom = () => {
-    const expandCost = 10000;
-    if (cash >= expandCost) {
-      setCash(prev => prev - expandCost);
-      setRoomSize(prev => prev + 1);
-      
-      toast({
-        title: "Room Expanded!",
-        description: `Your mining farm expanded by 1x1 tile!`,
-      });
-    } else {
-      toast({
-        title: "Not Enough Cash!",
-        description: `Need $${expandCost.toLocaleString()} to expand`,
-        variant: "destructive"
-      });
-    }
-  };
-
   const handleUpgrade = (upgradeId: string) => {
     const upgrade = upgrades.find(u => u.id === upgradeId);
     if (!upgrade || cash < upgrade.cost || upgrade.currentLevel >= upgrade.maxLevel) return;
@@ -770,8 +763,16 @@ export default function Game() {
     setCash(prev => prev - upgrade.cost);
     
     // Handle room expansion for "Buy Space" upgrade
+    // Progression: 3x3(0) → 3x4(1) → 4x4(2) → 4x5(3) → 5x5(4) → 5x6(5) → 6x6(6)
     if (upgradeId === "room-space") {
-      setRoomSize(prev => prev + 1);
+      const nextLevel = upgrade.currentLevel + 1;
+      // Levels: 1=3x4, 2=4x4, 3=4x5, 4=5x5, 5=5x6, 6=6x6
+      if (nextLevel === 1) { setGridHeight(4); } // 3x3 → 3x4
+      else if (nextLevel === 2) { setGridWidth(4); } // 3x4 → 4x4
+      else if (nextLevel === 3) { setGridHeight(5); } // 4x4 → 4x5
+      else if (nextLevel === 4) { setGridWidth(5); } // 4x5 → 5x5
+      else if (nextLevel === 5) { setGridHeight(6); } // 5x5 → 5x6
+      else if (nextLevel === 6) { setGridWidth(6); } // 5x6 → 6x6
     }
     
     setUpgrades(prev => prev.map(u => {
@@ -830,7 +831,8 @@ export default function Game() {
         <GameCanvas 
           pcs={scenePCs} 
           workers={ownedWorkers}
-          roomSize={roomSize}
+          gridWidth={gridWidth}
+          gridHeight={gridHeight}
           onPCClick={handlePCClick}
         />
         

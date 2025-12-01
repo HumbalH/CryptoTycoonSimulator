@@ -1,6 +1,6 @@
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
-import { Suspense, useRef, useState } from 'react';
+import { Suspense, useRef, useState, memo } from 'react';
 import * as THREE from 'three';
 
 interface MiningPCProps {
@@ -35,7 +35,7 @@ function FloatingCoin({ position }: { position: [number, number, number] }) {
   );
 }
 
-function MiningParticles({ position, count = 5 }: { position: [number, number, number]; count?: number }) {
+function MiningParticles({ position, count = 2 }: { position: [number, number, number]; count?: number }) {
   const particlesRef = useRef<THREE.Group>(null);
 
   useFrame((state) => {
@@ -53,7 +53,7 @@ function MiningParticles({ position, count = 5 }: { position: [number, number, n
     <group ref={particlesRef} position={position}>
       {Array.from({ length: count }).map((_, i) => (
         <mesh key={i}>
-          <sphereGeometry args={[0.05, 8, 8]} />
+          <sphereGeometry args={[0.05, 6, 6]} />
           <meshStandardMaterial 
             color="#00ffff"
             emissive="#00ffff"
@@ -65,7 +65,7 @@ function MiningParticles({ position, count = 5 }: { position: [number, number, n
   );
 }
 
-function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCProps) {
+const MiningPC = memo(function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCProps) {
   const pcRef = useRef<THREE.Group>(null);
 
   const config: Record<string, any> = {
@@ -206,7 +206,7 @@ function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCPr
       {isActive && (
         <>
           <FloatingCoin position={[0, height + 0.1, 0]} />
-          <MiningParticles position={[0, height / 2 + 0.1, 0]} count={4} />
+          <MiningParticles position={[0, height / 2 + 0.1, 0]} count={2} />
           <pointLight 
             position={[0, height / 2 + 0.1, 0]} 
             color={color}
@@ -227,7 +227,7 @@ function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCPr
       </mesh>
     </group>
   );
-}
+});
 
 interface WorkerProps {
   id: string;
@@ -333,8 +333,8 @@ function Clouds() {
   );
 }
 
-function Roads({ roomSize }: { roomSize: number }) {
-  const roadZ = -(roomSize + 2); // Road in front, just beyond the floor
+function Roads() {
+  const roadZ = -10; // Fixed road position, doesn't move with room expansion
   
   return (
     <>
@@ -355,8 +355,8 @@ function Roads({ roomSize }: { roomSize: number }) {
   );
 }
 
-function NPCs({ roomSize }: { roomSize: number }) {
-  const roadZ = -(roomSize + 2);
+function NPCs() {
+  const roadZ = -10; // Fixed road position
   
   const [npcPositions] = useState(() => {
     return Array.from({ length: 6 }).map(() => ({
@@ -444,8 +444,8 @@ function DetailedBuilding({ x, z, width, height, color, buildingId, shiftZ }: { 
   );
 }
 
-function CityBuildings({ roomSize }: { roomSize: number }) {
-  const roadZ = -(roomSize + 2);
+function CityBuildings() {
+  const roadZ = -10; // Fixed road position
   const buildingZ = roadZ - 5; // Buildings are 5 units further in front of the road
   
   // Single row of buildings stretched across
@@ -476,17 +476,61 @@ function CityBuildings({ roomSize }: { roomSize: number }) {
   );
 }
 
-function Floor({ size }: { size: number }) {
+function Floor({ gridWidth, gridHeight }: { gridWidth: number; gridHeight: number }) {
+  // Calculate floor dimensions based on unlocked grid
+  // Grid goes from [-3, -3] and expands right (+x) and back (+z)
+  // Each grid cell is 2 units apart
+  const floorWidth = gridWidth * 2;
+  const floorDepth = gridHeight * 2;
+  
+  // Center position: PC at [-3, -3] is the corner, so offset by half unit less
+  const centerX = -3 + floorWidth / 2 - 1;
+  const centerZ = -3 + floorDepth / 2 - 1;
+  
+  // Wall positions - walls are set back from the floor edges for an open feel
+  const wallOffset = 1; // Distance from floor edge
+  const leftWallX = centerX - floorWidth / 2 - wallOffset;
+  const rightWallX = centerX + floorWidth / 2 + wallOffset;
+  const frontWallZ = centerZ - floorDepth / 2 - wallOffset;
+  
+  const wallHeight = 3;
+  const wallThickness = 0.2;
+  const doorWidth = 3; // Width of the door opening
+  
   return (
     <>
-      {/* Main floor - vibrant grass green */}
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
-        <planeGeometry args={[size * 2, size * 2]} />
+      {/* Main floor - vibrant grass green - represents unlocked land */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[centerX, 0, centerZ]} receiveShadow>
+        <planeGeometry args={[floorWidth, floorDepth]} />
         <meshStandardMaterial 
           color="#2ecc71"
           metalness={0.1}
           roughness={0.8}
         />
+      </mesh>
+
+      {/* Left wall */}
+      <mesh position={[leftWallX, wallHeight / 2, centerZ]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, floorDepth + wallOffset * 2]} />
+        <meshStandardMaterial color="#7f8c8d" roughness={0.8} />
+      </mesh>
+
+      {/* Right wall */}
+      <mesh position={[rightWallX, wallHeight / 2, centerZ]} castShadow receiveShadow>
+        <boxGeometry args={[wallThickness, wallHeight, floorDepth + wallOffset * 2]} />
+        <meshStandardMaterial color="#7f8c8d" roughness={0.8} />
+      </mesh>
+
+      {/* Front wall (facing road) - left section */}
+      <mesh position={[centerX - doorWidth / 2 - (floorWidth / 2 - doorWidth / 2) / 2 - wallOffset / 2, wallHeight / 2, frontWallZ]} castShadow receiveShadow>
+        <boxGeometry args={[floorWidth / 2 - doorWidth / 2 + wallOffset, wallHeight, wallThickness]} />
+        <meshStandardMaterial color="#7f8c8d" roughness={0.8} />
+      </mesh>
+
+      {/* Front wall (facing road) - right section */}
+      <mesh position={[centerX + doorWidth / 2 + (floorWidth / 2 - doorWidth / 2) / 2 + wallOffset / 2, wallHeight / 2, frontWallZ]} castShadow receiveShadow>
+        <boxGeometry args={[floorWidth / 2 - doorWidth / 2 + wallOffset, wallHeight, wallThickness]} />
+        <meshStandardMaterial color="#7f8c8d" roughness={0.8} />
       </mesh>
 
       {/* Outer ground area - darker green */}
@@ -511,11 +555,12 @@ interface GameCanvasProps {
     isActive: boolean;
   }>;
   workers?: Array<{ id: string }>;
-  roomSize?: number;
+  gridWidth?: number;
+  gridHeight?: number;
   onPCClick?: (pcId: string) => void;
 }
 
-export default function GameCanvas({ pcs = [], workers = [], roomSize = 10, onPCClick }: GameCanvasProps) {
+export default function GameCanvas({ pcs = [], workers = [], gridWidth = 3, gridHeight = 3, onPCClick }: GameCanvasProps) {
   return (
     <div className="w-full h-full bg-gradient-to-b from-blue-400 via-cyan-300 to-green-300 relative" data-testid="game-canvas">
       <Canvas shadows>
@@ -558,16 +603,16 @@ export default function GameCanvas({ pcs = [], workers = [], roomSize = 10, onPC
           <Clouds />
 
           {/* Roads */}
-          <Roads roomSize={roomSize} />
+          <Roads />
 
           {/* City with detailed buildings */}
-          <CityBuildings roomSize={roomSize} />
+          <CityBuildings />
 
           {/* Walking NPCs */}
-          <NPCs roomSize={roomSize} />
+          <NPCs />
 
           {/* Scene */}
-          <Floor size={roomSize} />
+          <Floor gridWidth={gridWidth} gridHeight={gridHeight} />
           
           {/* Mining PCs */}
           {pcs.map(pc => (
@@ -608,8 +653,8 @@ export default function GameCanvas({ pcs = [], workers = [], roomSize = 10, onPC
           </div>
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
-            <span className="text-muted-foreground">Room:</span>
-            <span className="font-bold text-accent">{roomSize}x{roomSize}</span>
+            <span className="text-muted-foreground">Grid:</span>
+            <span className="font-bold text-accent">{gridWidth}x{gridHeight}</span>
           </div>
         </div>
       </div>
