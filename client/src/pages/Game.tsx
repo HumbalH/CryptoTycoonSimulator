@@ -1488,15 +1488,6 @@ export default function Game() {
         </DialogContent>
       </Dialog>
 
-      {/* Landscape orientation prompt for mobile */}
-      <div className="lg:hidden portrait:flex hidden fixed inset-0 bg-background z-[60] flex-col items-center justify-center p-6 text-center">
-        <div className="mb-6 text-6xl">📱</div>
-        <h2 className="text-2xl font-bold mb-2">Rotate Your Device</h2>
-        <p className="text-muted-foreground">
-          For the best experience, please rotate your device to landscape mode
-        </p>
-        <p className="text-xs text-muted-foreground mt-4">v1.5.0</p>
-      </div>
     </div>
   );
 }
