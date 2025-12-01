@@ -334,8 +334,16 @@ export default function Game() {
         const state = JSON.parse(gameState);
         setCash(state.cash || 20000);
         setTotalMined(state.totalMined || 0);
-        setGridWidth(state.gridWidth || 3);
-        setGridHeight(state.gridHeight || 3);
+        
+        // Backward compatibility: convert old roomSize to gridWidth/gridHeight
+        if (state.roomSize && !state.gridWidth && !state.gridHeight) {
+          setGridWidth(state.roomSize);
+          setGridHeight(state.roomSize);
+        } else {
+          setGridWidth(state.gridWidth || 3);
+          setGridHeight(state.gridHeight || 3);
+        }
+        
         setRebirthCount(state.rebirthCount || 0);
         if (state.ownedPCs && state.ownedPCs.length > 0) {
           // Fix Y position for old PCs that might have Y=0 or other values
