@@ -55,7 +55,7 @@ export default function Game() {
         icon: 'budget'
       },
       token: 'bitblitz',
-      position: [-3, 0.1, -3],
+      position: [-5, 0.1, -5],
       pendingEarnings: 0
     }
   ]);
@@ -353,13 +353,14 @@ export default function Game() {
             let newPosition = [pc.position[0], 0.1, pc.position[2]] as [number, number, number];
             
             // If migrating from old system, convert positions
-            // Old: -roomSize+2 to roomSize-2 (centered at 0)
-            // New: -3 to gridWidth*2-3 (starts at -3)
+            // Old: -(roomSize-2) to +(roomSize-2) (centered at 0, step 2)
+            // New: -5 to gridWidth*2-5 (starts at -5, step 2)
             if (needsMigration && state.roomSize) {
               const oldX = pc.position[0];
               const oldZ = pc.position[2];
               // Convert from old centered grid to new corner-based grid
-              newPosition = [oldX + 3, 0.1, oldZ + 3] as [number, number, number];
+              // Shift by -2 to move left/up
+              newPosition = [oldX - 2, 0.1, oldZ - 2] as [number, number, number];
             }
             
             return {
@@ -622,11 +623,11 @@ export default function Game() {
     setCash(prev => prev - pc.cost);
     
     // Optimized: Find first available position without generating full grid
-    // Fixed starting point at [-3, -3], expand right (gridWidth) and back (gridHeight)
+    // Fixed starting point at [-5, -5], expand right (gridWidth) and back (gridHeight)
     let foundPosition: [number, number, number] | null = null;
     
-    for (let x = -3; x < -3 + gridWidth * 2 && !foundPosition; x += 2) {
-      for (let z = -3; z < -3 + gridHeight * 2 && !foundPosition; z += 2) {
+    for (let x = -5; x < -5 + gridWidth * 2 && !foundPosition; x += 2) {
+      for (let z = -5; z < -5 + gridHeight * 2 && !foundPosition; z += 2) {
         const pos: [number, number, number] = [x, 0.1, z];
         // Check if this position is available
         const isOccupied = ownedPCs.some(owned => 

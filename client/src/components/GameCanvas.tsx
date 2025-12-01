@@ -478,16 +478,16 @@ function CityBuildings() {
 
 function Floor({ gridWidth, gridHeight }: { gridWidth: number; gridHeight: number }) {
   // Calculate floor dimensions based on unlocked grid
-  // Grid goes from [-3, -3] and expands right (+x) and back (+z)
+  // Grid goes from [-5, -5] and expands right (+x) and back (+z)
   // Each grid cell is 2 units apart
   const floorWidth = gridWidth * 2;
   const floorDepth = gridHeight * 2;
   
-  // Center position: Grid starts at [-3, -3], so center is offset from origin
-  // For a grid of width W and depth D, the positions go from [-3, -3] to [-3+W*2, -3+D*2]
+  // Center position: Grid starts at [-5, -5], so center is offset from origin
+  // For a grid of width W and depth D, the positions go from [-5, -5] to [-5+W*2, -5+D*2]
   // Center should be at the midpoint
-  const centerX = -3 + floorWidth / 2;
-  const centerZ = -3 + floorDepth / 2;
+  const centerX = -5 + floorWidth / 2;
+  const centerZ = -5 + floorDepth / 2;
   
   // Wall positions - walls are set back from the floor edges for an open feel
   const wallOffset = 1; // Distance from floor edge
