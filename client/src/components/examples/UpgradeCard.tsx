@@ -6,37 +6,37 @@ export default function UpgradeCardExample() {
   
   const upgrades = [
     {
-      id: "hashrate",
-      name: "Hashrate Boost",
+      id: "mining-speed",
+      name: "Overclocking",
       description: "Increase mining speed for all PCs",
       cost: 10000,
       currentLevel: 2,
       maxLevel: 10,
-      effect: "+15% mining rate",
+      effect: "+10% mining speed per level",
       unlocked: true,
-      category: "pc" as const
+      category: "mining" as const
     },
     {
-      id: "worker-speed",
-      name: "Worker Efficiency",
-      description: "Workers maintain PCs faster",
+      id: "worker-discount",
+      name: "Recruitment Program",
+      description: "Reduce worker hiring costs",
       cost: 25000,
       currentLevel: 0,
       maxLevel: 5,
-      effect: "+20% worker speed",
+      effect: "-15% worker cost per level",
       unlocked: true,
-      category: "worker" as const
+      category: "economy" as const
     },
     {
-      id: "room-expansion",
-      name: "Room Expansion",
+      id: "room-space",
+      name: "Expand Base",
       description: "Unlock larger mining area",
       cost: 50000,
       currentLevel: 1,
       maxLevel: 3,
-      effect: "+5x5 grid space",
+      effect: "+1 grid space per level",
       unlocked: false,
-      category: "room" as const
+      category: "expansion" as const
     }
   ];
 

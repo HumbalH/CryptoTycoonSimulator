@@ -402,41 +402,178 @@ function NPCs() {
   );
 }
 
-function DetailedBuilding({ x, z, width, height, color, buildingId, shiftZ }: { x: number; z: number; width: number; height: number; color: string; buildingId: number; shiftZ: number }) {
-  const adjustedZ = z + shiftZ;
-  const windowColors = ['#ffff00', '#00ff88', '#ff00ff', '#00ffff', '#ffff00', '#ff88ff'];
-  const windowColor = windowColors[buildingId % windowColors.length];
+// Isometric-style building component inspired by city building games
+function IsometricBuilding({ x, z, width, height, depth, color, type }: { 
+  x: number; z: number; width: number; height: number; depth: number; color: string; type: 'modern' | 'classic' | 'pagoda' | 'castle' | 'dome' | 'house' 
+}) {
+  const windowColor = '#ffeb3b';
   
+  if (type === 'pagoda') {
+    return (
+      <group position={[x, 0, z]}>
+        {/* Multi-tiered Asian-style building */}
+        {Array.from({ length: 4 }).map((_, tier) => {
+          const tierHeight = height / 4;
+          const tierWidth = width * (1 - tier * 0.15);
+          const tierDepth = depth * (1 - tier * 0.15);
+          const tierY = tier * tierHeight;
+          
+          return (
+            <group key={`tier-${tier}`}>
+              {/* Floor */}
+              <mesh position={[0, tierY + tierHeight / 2, 0]}>
+                <boxGeometry args={[tierWidth, tierHeight * 0.7, tierDepth]} />
+                <meshStandardMaterial color={color} metalness={0.2} roughness={0.6} />
+              </mesh>
+              {/* Roof tier */}
+              <mesh position={[0, tierY + tierHeight, 0]} rotation={[0, Math.PI / 4, 0]}>
+                <coneGeometry args={[tierWidth * 0.7, tierHeight * 0.5, 4]} />
+                <meshStandardMaterial color="#15803d" metalness={0.3} roughness={0.5} />
+              </mesh>
+              {/* Windows */}
+              {Array.from({ length: 2 }).map((_, i) => (
+                <mesh key={`win-${i}`} position={[tierWidth / 3 * (i - 0.5), tierY + tierHeight / 2, tierDepth / 2 + 0.1]}>
+                  <boxGeometry args={[0.4, 0.4, 0.05]} />
+                  <meshStandardMaterial color={windowColor} emissive={windowColor} emissiveIntensity={0.3} />
+                </mesh>
+              ))}
+            </group>
+          );
+        })}
+      </group>
+    );
+  }
+  
+  if (type === 'castle') {
+    return (
+      <group position={[x, 0, z]}>
+        {/* Main castle body */}
+        <mesh position={[0, height / 2, 0]}>
+          <boxGeometry args={[width, height, depth]} />
+          <meshStandardMaterial color={color} metalness={0.1} roughness={0.8} />
+        </mesh>
+        {/* Towers at corners */}
+        {[[-1, -1], [1, -1], [-1, 1], [1, 1]].map(([xPos, zPos], idx) => (
+          <group key={`tower-${idx}`}>
+            <mesh position={[xPos * width / 3, height * 0.7, zPos * depth / 3]}>
+              <cylinderGeometry args={[width / 6, width / 6, height * 1.4, 8]} />
+              <meshStandardMaterial color={color} />
+            </mesh>
+            <mesh position={[xPos * width / 3, height * 1.5, zPos * depth / 3]}>
+              <coneGeometry args={[width / 5, height / 4, 8]} />
+              <meshStandardMaterial color="#7c2d12" />
+            </mesh>
+          </group>
+        ))}
+        {/* Windows */}
+        {Array.from({ length: 3 }).map((_, row) =>
+          Array.from({ length: 2 }).map((_, col) => (
+            <mesh key={`win-${row}-${col}`} position={[width / 4 * (col - 0.5), 2 + row * 2, depth / 2 + 0.1]}>
+              <boxGeometry args={[0.5, 0.6, 0.05]} />
+              <meshStandardMaterial color={windowColor} emissive={windowColor} emissiveIntensity={0.3} />
+            </mesh>
+          ))
+        )}
+      </group>
+    );
+  }
+  
+  if (type === 'dome') {
+    return (
+      <group position={[x, 0, z]}>
+        {/* Base building */}
+        <mesh position={[0, height / 3, 0]}>
+          <cylinderGeometry args={[width / 2, width / 2, height * 0.6, 8]} />
+          <meshStandardMaterial color={color} metalness={0.2} roughness={0.6} />
+        </mesh>
+        {/* Dome */}
+        <mesh position={[0, height * 0.7, 0]}>
+          <sphereGeometry args={[width / 2.2, 16, 16, 0, Math.PI * 2, 0, Math.PI / 2]} />
+          <meshStandardMaterial color="#fbbf24" metalness={0.6} roughness={0.3} />
+        </mesh>
+        {/* Decorative elements */}
+        {Array.from({ length: 8 }).map((_, i) => {
+          const angle = (i / 8) * Math.PI * 2;
+          return (
+            <mesh key={`arch-${i}`} position={[Math.cos(angle) * width / 2.5, height / 3, Math.sin(angle) * width / 2.5]}>
+              <boxGeometry args={[0.3, height * 0.4, 0.3]} />
+              <meshStandardMaterial color="#fff" metalness={0.1} roughness={0.7} />
+            </mesh>
+          );
+        })}
+      </group>
+    );
+  }
+  
+  if (type === 'modern') {
+    return (
+      <group position={[x, 0, z]}>
+        {/* Main glass tower */}
+        <mesh position={[0, height / 2, 0]}>
+          <boxGeometry args={[width, height, depth]} />
+          <meshStandardMaterial color={color} metalness={0.5} roughness={0.2} />
+        </mesh>
+        {/* Window grid pattern */}
+        {Array.from({ length: Math.floor(height / 1.5) }).map((_, row) =>
+          Array.from({ length: 4 }).map((_, col) => (
+            <mesh key={`win-${row}-${col}`} position={[width / 5 * (col - 1.5), 1 + row * 1.5, depth / 2 + 0.05]}>
+              <boxGeometry args={[0.5, 0.8, 0.05]} />
+              <meshStandardMaterial color={windowColor} emissive={windowColor} emissiveIntensity={0.4} />
+            </mesh>
+          ))
+        )}
+      </group>
+    );
+  }
+  
+  if (type === 'house') {
+    return (
+      <group position={[x, 0, z]}>
+        {/* House body */}
+        <mesh position={[0, height / 2, 0]}>
+          <boxGeometry args={[width, height, depth]} />
+          <meshStandardMaterial color={color} metalness={0.1} roughness={0.8} />
+        </mesh>
+        {/* Pitched roof */}
+        <mesh position={[0, height, 0]} rotation={[0, Math.PI / 2, 0]}>
+          <coneGeometry args={[depth / 1.5, height / 2, 4]} />
+          <meshStandardMaterial color="#b91c1c" metalness={0.2} roughness={0.7} />
+        </mesh>
+        {/* Door */}
+        <mesh position={[0, height / 4, depth / 2 + 0.05]}>
+          <boxGeometry args={[0.8, height / 2, 0.05]} />
+          <meshStandardMaterial color="#92400e" />
+        </mesh>
+        {/* Windows */}
+        {[-1, 1].map((side) => (
+          <mesh key={`win-${side}`} position={[side * width / 3, height * 0.6, depth / 2 + 0.05]}>
+            <boxGeometry args={[0.6, 0.6, 0.05]} />
+            <meshStandardMaterial color={windowColor} emissive={windowColor} emissiveIntensity={0.3} />
+          </mesh>
+        ))}
+      </group>
+    );
+  }
+  
+  // Default: classic building
   return (
-    <group>
-      {/* Main building body */}
-      <mesh position={[x, height / 2, adjustedZ]} castShadow>
-        <boxGeometry args={[width, height, 5]} />
+    <group position={[x, 0, z]}>
+      {/* Building body */}
+      <mesh position={[0, height / 2, 0]}>
+        <boxGeometry args={[width, height, depth]} />
         <meshStandardMaterial color={color} metalness={0.15} roughness={0.65} />
       </mesh>
-      
-      {/* Roof */}
-      <mesh position={[x, height, adjustedZ]}>
-        <coneGeometry args={[width / 2 + 0.3, 1.5, 4]} />
-        <meshStandardMaterial color={color} metalness={0.2} roughness={0.7} />
+      {/* Flat roof */}
+      <mesh position={[0, height, 0]}>
+        <boxGeometry args={[width + 0.2, 0.3, depth + 0.2]} />
+        <meshStandardMaterial color="#64748b" />
       </mesh>
-      
-      {/* Door */}
-      <mesh position={[x, 1, adjustedZ + 2.6]}>
-        <boxGeometry args={[1, 2, 0.1]} />
-        <meshStandardMaterial color="#8b4513" />
-      </mesh>
-      <mesh position={[x + 0.35, 1.5, adjustedZ + 2.65]}>
-        <sphereGeometry args={[0.08, 16, 16]} />
-        <meshStandardMaterial color="#ffd700" metalness={0.9} />
-      </mesh>
-      
-      {/* Windows grid */}
-      {Array.from({ length: Math.ceil(height / 2.5) }).map((_, row) =>
+      {/* Windows */}
+      {Array.from({ length: Math.floor(height / 2) }).map((_, row) =>
         Array.from({ length: 3 }).map((_, col) => (
-          <mesh key={`window-${row}-${col}`} position={[x - width / 3 + col * (width / 3), 2 + row * 2.5, adjustedZ + 2.6]}>
-            <boxGeometry args={[0.6, 0.6, 0.15]} />
-            <meshStandardMaterial color={windowColor} emissive={windowColor} emissiveIntensity={0.5} />
+          <mesh key={`win-${row}-${col}`} position={[width / 4 * (col - 1), 1.5 + row * 2, depth / 2 + 0.05]}>
+            <boxGeometry args={[0.5, 0.6, 0.05]} />
+            <meshStandardMaterial color={windowColor} emissive={windowColor} emissiveIntensity={0.3} />
           </mesh>
         ))
       )}
@@ -444,35 +581,75 @@ function DetailedBuilding({ x, z, width, height, color, buildingId, shiftZ }: { 
   );
 }
 
-function CityBuildings() {
-  const roadZ = -10; // Fixed road position
-  const buildingZ = roadZ - 5; // Buildings are 5 units further in front of the road
+function CityTown() {
+  const roadZ = -10;
+  const townZ = roadZ - 12; // Buildings behind the road (opposite side from player's field)
   
-  // Single row of buildings stretched across
-  const buildingConfigs = [
-    { x: -24, z: buildingZ, width: 5, height: 12, color: '#ff6b6b' },
-    { x: -14, z: buildingZ, width: 5, height: 14, color: '#ff8c42' },
-    { x: -4, z: buildingZ, width: 5, height: 13, color: '#ffd93d' },
-    { x: 6, z: buildingZ, width: 5, height: 12, color: '#6bcf7f' },
-    { x: 16, z: buildingZ, width: 5, height: 15, color: '#4d96ff' },
-    { x: 26, z: buildingZ, width: 5, height: 11, color: '#b562ff' },
+  // Diverse town with different building types spread across the view
+  const buildings = [
+    // Left side - residential area
+    { x: -26, z: townZ, width: 4, height: 8, depth: 5, color: '#e0e7ff', type: 'house' as const },
+    { x: -20, z: townZ - 3, width: 4, height: 8, depth: 5, color: '#fef3c7', type: 'house' as const },
+    { x: -14, z: townZ, width: 5, height: 10, depth: 6, color: '#fce7f3', type: 'house' as const },
+    
+    // Left-center - historic buildings
+    { x: -8, z: townZ - 2, width: 6, height: 14, depth: 6, color: '#d1d5db', type: 'castle' as const },
+    { x: -1, z: townZ, width: 5, height: 12, depth: 5, color: '#c084fc', type: 'pagoda' as const },
+    
+    // Center - commercial district  
+    { x: 5, z: townZ - 1, width: 5, height: 18, depth: 5, color: '#1e3a8a', type: 'modern' as const },
+    { x: 11, z: townZ, width: 4, height: 20, depth: 4, color: '#0f766e', type: 'modern' as const },
+    
+    // Right-center - mixed use
+    { x: 16, z: townZ - 2, width: 6, height: 13, depth: 6, color: '#f97316', type: 'dome' as const },
+    { x: 22, z: townZ, width: 5, height: 15, depth: 5, color: '#475569', type: 'classic' as const },
+    
+    // Right side - residential
+    { x: 27, z: townZ - 1, width: 4, height: 8, depth: 5, color: '#bfdbfe', type: 'house' as const },
   ];
   
+  // Additional small roads/paths in the town
   return (
-    <>
-      {buildingConfigs.map((building, i) => (
-        <DetailedBuilding
-          key={`building-${i}`}
-          x={building.x}
-          z={building.z}
-          width={building.width}
-          height={building.height}
-          color={building.color}
-          buildingId={i}
-          shiftZ={0} // No shift needed - buildings are at absolute positions now
-        />
+    <group>
+      {/* Town base ground - darker to create depth */}
+      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, townZ]}>
+        <planeGeometry args={[65, 20]} />
+        <meshStandardMaterial color="#374151" />
+      </mesh>
+      
+      {/* Small streets in town */}
+      {[-10, 5, 18].map((streetX) => (
+        <mesh key={`street-${streetX}`} rotation={[-Math.PI / 2, 0, 0]} position={[streetX, 0.002, townZ]}>
+          <planeGeometry args={[2, 20]} />
+          <meshStandardMaterial color="#52525b" />
+        </mesh>
       ))}
-    </>
+      
+      {/* Buildings */}
+      {buildings.map((building, idx) => (
+        <IsometricBuilding key={`building-${idx}`} {...building} />
+      ))}
+      
+      {/* Decorative elements - trees/parks */}
+      {Array.from({ length: 8 }).map((_, i) => {
+        const x = -24 + i * 7;
+        const zOffset = (i % 2) * 3;
+        return (
+          <group key={`tree-${i}`} position={[x + 2, 0, townZ - 7 + zOffset]}>
+            {/* Tree trunk */}
+            <mesh position={[0, 1, 0]}>
+              <cylinderGeometry args={[0.3, 0.4, 2, 8]} />
+              <meshStandardMaterial color="#78350f" />
+            </mesh>
+            {/* Tree foliage */}
+            <mesh position={[0, 2.5, 0]}>
+              <coneGeometry args={[1.2, 2.5, 8]} />
+              <meshStandardMaterial color="#15803d" />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
   );
 }
 
@@ -572,9 +749,6 @@ export default function GameCanvas({ pcs = [], workers = [], gridWidth = 3, grid
 
           {/* Roads */}
           <Roads />
-
-          {/* City with detailed buildings */}
-          <CityBuildings />
 
           {/* Walking NPCs */}
           <NPCs />

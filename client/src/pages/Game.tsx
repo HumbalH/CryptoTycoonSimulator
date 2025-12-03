@@ -6,6 +6,7 @@ import PCCard, { PCType } from '@/components/PCCard';
 import WorkerCard, { WorkerType } from '@/components/WorkerCard';
 import TokenCard, { Token } from '@/components/TokenCard';
 import UpgradeCard, { Upgrade } from '@/components/UpgradeCard';
+import UpgradeDetailsModal from '@/components/UpgradeDetailsModal';
 import CelebrityVisitModal, { Celebrity } from '@/components/CelebrityVisitModal';
 import GameTutorial from '@/components/GameTutorial';
 import { Card, CardContent } from '@/components/ui/card';
@@ -34,6 +35,8 @@ export default function Game() {
   const [lastLogout, setLastLogout] = useState<number>(Date.now());
   const [offlineEarningsAmount, setOfflineEarningsAmount] = useState(0);
   const [showOfflineEarningsModal, setShowOfflineEarningsModal] = useState(false);
+  const [selectedUpgrade, setSelectedUpgrade] = useState<Upgrade | null>(null);
+  const [showUpgradeDetails, setShowUpgradeDetails] = useState(false);
   const [showTutorial, setShowTutorial] = useState(localStorage.getItem('tutorialCompleted') !== 'true');
   const [tutorialStep, setTutorialStep] = useState(0);
   
@@ -201,124 +204,93 @@ export default function Game() {
 
   const [activeToken, setActiveToken] = useState('bitblitz');
 
-  // Upgrades state - todo: remove mock functionality
+  // Upgrades state
   const [upgrades, setUpgrades] = useState<Upgrade[]>([
     {
-      id: "hashrate",
-      name: "Hashrate Boost",
-      description: "Increase mining speed for all PCs",
-      cost: 30000,
-      currentLevel: 0,
-      maxLevel: 10,
-      effect: "+15% mining rate per level",
-      unlocked: true,
-      category: "pc"
-    },
-    {
-      id: "cooling",
-      name: "Cooling System",
-      description: "Better cooling = better performance",
-      cost: 40000,
-      currentLevel: 0,
-      maxLevel: 5,
-      effect: "+10% efficiency",
-      unlocked: true,
-      category: "pc"
-    },
-    {
-      id: "power-efficiency",
-      name: "Power Optimizer",
-      description: "Reduce power consumption costs",
-      cost: 50000,
-      currentLevel: 0,
-      maxLevel: 8,
-      effect: "-5% operating costs per level",
-      unlocked: true,
-      category: "pc"
-    },
-    {
-      id: "worker-speed",
-      name: "Worker Training",
-      description: "Train workers to be more efficient",
-      cost: 60000,
-      currentLevel: 0,
-      maxLevel: 5,
-      effect: "+20% worker speed",
-      unlocked: true,
-      category: "worker"
-    },
-    {
-      id: "worker-capacity",
-      name: "Worker Housing",
-      description: "Expand worker capacity for hiring",
-      cost: 80000,
-      currentLevel: 0,
-      maxLevel: 5,
-      effect: "+3 worker slots per level",
-      unlocked: true,
-      category: "worker"
-    },
-    {
       id: "room-space",
-      name: "Buy Space",
-      description: "Expand your mining area",
+      name: "Expand Base",
+      description: "Unlock more space to build additional PCs",
       cost: 20000,
       currentLevel: 0,
       maxLevel: 6,
-      effect: "Progression: 3x3→3x4→4x4→4x5→5x5→5x6→6x6",
+      effect: "+1 grid space per level",
       unlocked: true,
-      category: "room"
+      category: "expansion"
     },
     {
-      id: "room-climate",
-      name: "Climate Control",
-      description: "Advanced environmental management",
-      cost: 120000,
+      id: "mining-speed",
+      name: "Overclocking",
+      description: "Boost all PCs' mining rate with advanced overclocking techniques",
+      cost: 75000,
+      currentLevel: 0,
+      maxLevel: 5,
+      effect: "+10% mining speed per level",
+      unlocked: true,
+      category: "mining"
+    },
+    {
+      id: "offline-boost",
+      name: "Remote Monitoring",
+      description: "Increase earnings while you're offline with remote monitoring systems",
+      cost: 100000,
       currentLevel: 0,
       maxLevel: 3,
-      effect: "Improved PC stability +25% per level",
+      effect: "+0.1x to all offline tiers per level",
       unlocked: true,
-      category: "room"
+      category: "mining"
+    },
+    {
+      id: "worker-discount",
+      name: "Recruitment Program",
+      description: "Reduce the cost to hire new workers with an optimized recruitment program",
+      cost: 40000,
+      currentLevel: 0,
+      maxLevel: 3,
+      effect: "-15% worker cost per level",
+      unlocked: true,
+      category: "economy"
+    },
+    {
+      id: "rebirth-discount",
+      name: "Efficiency Expert",
+      description: "Reduce the cost required for your next rebirth through efficiency improvements",
+      cost: 200000,
+      currentLevel: 0,
+      maxLevel: 3,
+      effect: "-10% rebirth cost per level",
+      unlocked: true,
+      category: "economy"
     },
     {
       id: "auto-collect",
       name: "Auto-Collection",
-      description: "Automatically collect idle earnings",
+      description: "Automatically collect earnings from all PCs without manual clicking",
       cost: 150000,
       currentLevel: 0,
-      maxLevel: 3,
-      effect: "Collect while offline",
+      maxLevel: 1,
+      effect: "Automatic earnings collection",
       unlocked: true,
-      category: "passive"
+      category: "automation"
     },
     {
       id: "token-discount",
       name: "Token Switch Discount",
-      description: "Reduce cost of switching tokens",
-      cost: 70000,
+      description: "Reduce the cost when switching between different tokens",
+      cost: 50000,
       currentLevel: 0,
       maxLevel: 5,
-      effect: "-20 switch cost per level",
+      effect: "-$1,000 switch cost per level",
       unlocked: true,
-      category: "passive"
-    },
-    {
-      id: "security-system",
-      name: "Security System",
-      description: "Protect your mining assets",
-      cost: 100000,
-      currentLevel: 0,
-      maxLevel: 4,
-      effect: "-10% PC failure rate per level",
-      unlocked: true,
-      category: "passive"
+      category: "economy"
     }
   ]);
 
   // Calculate total mining rate (in cash/s based on PC rates and token values)
+  const miningSpeedLevel = upgrades.find(u => u.id === 'mining-speed')?.currentLevel || 0;
+  const miningSpeedBoost = 1 + (miningSpeedLevel * 0.1);
   const totalMiningRate = ownedPCs.reduce((sum, pc) => {
     const token = tokens.find(t => t.id === pc.token);
-    const tokensPerSecond = pc.type.miningRate; // How many tokens this PC mines per second
+    const tokensPerSecond = pc.type.miningRate * miningSpeedBoost; // How many tokens this PC mines per second with boost
     const cashPerToken = token?.profitRate || 10; // How much each token is worth
     return sum + (tokensPerSecond * cashPerToken);
   }, 0);
@@ -332,6 +304,16 @@ export default function Game() {
     if (gameState) {
       try {
         const state = JSON.parse(gameState);
+        
+        // Version check: clear old saves (increment GAME_VERSION when you want to force reset)
+        const GAME_VERSION = 2; // Increment this number in future updates to reset all saves
+        if (!state.gameVersion || state.gameVersion < GAME_VERSION) {
+          console.log('Old save detected, clearing localStorage...');
+          localStorage.removeItem('gameState');
+          // Don't reload, just let it use default state
+          return; // Exit early, game will use default state
+        }
+        
         setCash(state.cash || 20000);
         setTotalMined(state.totalMined || 0);
         
@@ -374,7 +356,19 @@ export default function Game() {
           setOwnedWorkers(state.ownedWorkers);
         }
         if (state.upgrades && state.upgrades.length > 0) {
-          setUpgrades(state.upgrades);
+          // Migrate upgrades: keep only the working ones and preserve their levels
+          const validUpgradeIds = ['room-space', 'mining-speed', 'offline-boost', 'worker-discount', 'rebirth-discount', 'auto-collect', 'token-discount'];
+          const migratedUpgrades = upgrades.map(upgrade => {
+            const oldUpgrade = state.upgrades.find((u: any) => u.id === upgrade.id);
+            if (oldUpgrade && validUpgradeIds.includes(upgrade.id)) {
+              return {
+                ...upgrade,
+                currentLevel: oldUpgrade.currentLevel
+              };
+            }
+            return upgrade;
+          });
+          setUpgrades(migratedUpgrades);
         }
         if (state.activeToken) {
           setActiveToken(state.activeToken);
@@ -401,7 +395,13 @@ export default function Game() {
           const rebirthMultiplier = 1 + ((state.rebirthCount || 0) * 0.1);
           offlineRate *= rebirthMultiplier;
           
-          // Tiered offline earnings: 0.3x for first 3 hours, 0.2x for next 3 hours, 0.1x for next 18 hours (max 24 hours total)
+          // Get offline boost level and calculate tier multipliers
+          const offlineBoostLevel = (state.upgrades?.find((u: any) => u.id === 'offline-boost')?.currentLevel || 0);
+          const tier1Multiplier = 0.3 + (offlineBoostLevel * 0.1);
+          const tier2Multiplier = 0.2 + (offlineBoostLevel * 0.1);
+          const tier3Multiplier = 0.1 + (offlineBoostLevel * 0.1);
+          
+          // Tiered offline earnings: (0.3+boost)x for first 3 hours, (0.2+boost)x for next 3 hours, (0.1+boost)x for next 18 hours (max 24 hours total)
           let earnings = 0;
           const maxOfflineTime = 24 * 60 * 60; // 24 hours in seconds
           const effectiveTime = Math.min(timeAwaySeconds, maxOfflineTime);
@@ -410,18 +410,18 @@ export default function Game() {
           const tier2Time = 6 * 60 * 60; // Up to 6 hours total
           
           if (effectiveTime <= tier1Time) {
-            // First 3 hours at 0.3x
-            earnings = Math.floor(offlineRate * effectiveTime * 0.3);
+            // First 3 hours at (0.3+boost)x
+            earnings = Math.floor(offlineRate * effectiveTime * tier1Multiplier);
           } else if (effectiveTime <= tier2Time) {
-            // First 3 hours at 0.3x + next hours at 0.2x
-            const tier1Earnings = Math.floor(offlineRate * tier1Time * 0.3);
-            const tier2Earnings = Math.floor(offlineRate * (effectiveTime - tier1Time) * 0.2);
+            // First 3 hours at (0.3+boost)x + next hours at (0.2+boost)x
+            const tier1Earnings = Math.floor(offlineRate * tier1Time * tier1Multiplier);
+            const tier2Earnings = Math.floor(offlineRate * (effectiveTime - tier1Time) * tier2Multiplier);
             earnings = tier1Earnings + tier2Earnings;
           } else {
-            // First 3 hours at 0.3x + next 3 hours at 0.2x + remaining at 0.1x
-            const tier1Earnings = Math.floor(offlineRate * tier1Time * 0.3);
-            const tier2Earnings = Math.floor(offlineRate * (tier2Time - tier1Time) * 0.2);
-            const tier3Earnings = Math.floor(offlineRate * (effectiveTime - tier2Time) * 0.1);
+            // First 3 hours at (0.3+boost)x + next 3 hours at (0.2+boost)x + remaining at (0.1+boost)x
+            const tier1Earnings = Math.floor(offlineRate * tier1Time * tier1Multiplier);
+            const tier2Earnings = Math.floor(offlineRate * (tier2Time - tier1Time) * tier2Multiplier);
+            const tier3Earnings = Math.floor(offlineRate * (effectiveTime - tier2Time) * tier3Multiplier);
             earnings = tier1Earnings + tier2Earnings + tier3Earnings;
           }
           
@@ -442,6 +442,7 @@ export default function Game() {
   useEffect(() => {
     const saveGameState = () => {
       const gameState = {
+        gameVersion: 2, // Increment this when you want to force reset all saves
         cash,
         totalMined,
         gridWidth,
@@ -475,10 +476,12 @@ export default function Game() {
   useEffect(() => {
     const interval = setInterval(() => {
       const hasAutoCollect = (upgrades.find(u => u.id === 'auto-collect')?.currentLevel || 0) > 0;
+      const miningSpeedLevel = upgrades.find(u => u.id === 'mining-speed')?.currentLevel || 0;
+      const miningSpeedBoost = 1 + (miningSpeedLevel * 0.1); // +10% per level
       
       setOwnedPCs(prev => prev.map(pc => {
         const token = tokens.find(t => t.id === pc.token);
-        const tokensPerSecond = pc.type.miningRate; // How many tokens this PC mines
+        const tokensPerSecond = pc.type.miningRate * miningSpeedBoost; // Apply mining speed boost
         const cashPerToken = token?.profitRate || 10; // Value per token
         const income = Math.floor(tokensPerSecond * cashPerToken * earningsMultiplier);
         
@@ -665,9 +668,16 @@ export default function Game() {
 
   const handleHireWorker = (workerId: string) => {
     const worker = availableWorkers.find(w => w.id === workerId);
-    if (!worker || cash < worker.cost) return;
+    if (!worker) return;
+    
+    // Apply worker discount
+    const workerDiscountLevel = upgrades.find(u => u.id === 'worker-discount')?.currentLevel || 0;
+    const workerDiscountMultiplier = 1 - (workerDiscountLevel * 0.15);
+    const discountedCost = Math.floor(worker.cost * workerDiscountMultiplier);
+    
+    if (cash < discountedCost) return;
 
-    setCash(prev => prev - worker.cost);
+    setCash(prev => prev - discountedCost);
     setOwnedWorkers(prev => [...prev, { id: `worker-${Date.now()}`, type: worker.type }]);
 
     toast({
@@ -680,9 +690,9 @@ export default function Game() {
     const token = tokens.find(t => t.id === tokenId);
     if (!token?.unlocked) return;
     
-    const baseTokenSwitchCost = 1000;
+    const baseTokenSwitchCost = 10000;
     const tokenDiscountUpgrade = upgrades.find(u => u.id === 'token-discount');
-    const discountAmount = (tokenDiscountUpgrade?.currentLevel || 0) * 200;
+    const discountAmount = (tokenDiscountUpgrade?.currentLevel || 0) * 1000;
     const switchCost = Math.max(0, baseTokenSwitchCost - discountAmount);
     
     if (activeToken !== tokenId && cash >= switchCost) {
@@ -748,12 +758,45 @@ export default function Game() {
     // After 3rd rebirth, multiply by 2 each time
     rebirthCost = Math.floor(1500000 * Math.pow(2, rebirthCount - 2));
   }
+  
+  // Apply rebirth discount upgrade
+  const rebirthDiscountLevel = upgrades.find(u => u.id === 'rebirth-discount')?.currentLevel || 0;
+  const rebirthDiscountMultiplier = 1 - (rebirthDiscountLevel * 0.1);
+  rebirthCost = Math.floor(rebirthCost * rebirthDiscountMultiplier);
+
+  // Check rebirth requirements
+  const getRebirthRequirements = () => {
+    const requirements: { met: boolean; description: string }[] = [
+      { met: cash >= rebirthCost, description: `$${rebirthCost.toLocaleString()} cash` }
+    ];
+
+    if (rebirthCount === 0) {
+      requirements.push({ met: ownedPCs.length >= 5, description: 'At least 5 PCs built' });
+    } else if (rebirthCount === 1) {
+      requirements.push({ met: ownedWorkers.length >= 2, description: 'At least 2 Workers hired' });
+    } else if (rebirthCount === 2) {
+      const hasGamingPC = ownedPCs.some(pc => pc.type.id === 'gaming-pc');
+      requirements.push({ met: hasGamingPC, description: '1 Gaming PC' });
+    } else if (rebirthCount === 3) {
+      const hasServerRack = ownedPCs.some(pc => pc.type.id === 'server-rack');
+      requirements.push({ met: hasServerRack, description: '1 Server Rack' });
+    } else if (rebirthCount === 4) {
+      const hasQuantumCore = ownedPCs.some(pc => pc.type.id === 'quantum-core');
+      requirements.push({ met: hasQuantumCore, description: '1 Quantum Core' });
+    }
+
+    return requirements;
+  };
+
+  const rebirthRequirements = getRebirthRequirements();
+  const canRebirth = rebirthRequirements.every(req => req.met);
 
   const handleRebirth = () => {
-    if (cash < rebirthCost) {
+    if (!canRebirth) {
+      const unmetRequirements = rebirthRequirements.filter(req => !req.met);
       toast({
-        title: "Not enough cash!",
-        description: `You need $${rebirthCost.toLocaleString()} to rebirth. You have $${cash.toLocaleString()}`,
+        title: "Requirements not met!",
+        description: `Missing: ${unmetRequirements.map(req => req.description).join(', ')}`,
         variant: "destructive"
       });
       return;
@@ -958,16 +1001,18 @@ export default function Game() {
         }
         upgradeContent={
           <div className="space-y-6 pt-0">
+            {/* Base Expansion */}
             <div className="space-y-2">
-              <h3 className="font-bold font-mono text-lg text-primary">PC Upgrades</h3>
-              <p className="text-xs text-muted-foreground">Boost mining power and PC performance</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                {upgrades.filter(u => u.category === 'pc').map(upgrade => (
+              <h3 className="font-bold font-mono text-lg text-blue-400">🏢 Base Expansion</h3>
+              <p className="text-xs text-muted-foreground">Expand your mining facility to build more PCs</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {upgrades.filter(u => u.category === 'expansion').map(upgrade => (
                   <UpgradeCard 
                     key={upgrade.id}
                     upgrade={upgrade}
                     canAfford={cash >= upgrade.cost}
                     onPurchase={handleUpgrade}
+                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
                   />
                 ))}
               </div>
@@ -975,16 +1020,18 @@ export default function Game() {
 
             <div className="h-px bg-gradient-to-r from-primary/20 via-secondary/20 to-transparent"></div>
 
+            {/* Mining Optimization */}
             <div className="space-y-2">
-              <h3 className="font-bold font-mono text-lg text-secondary">Worker Upgrades</h3>
-              <p className="text-xs text-muted-foreground">Enhance your workforce capabilities</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                {upgrades.filter(u => u.category === 'worker').map(upgrade => (
+              <h3 className="font-bold font-mono text-lg text-purple-400">⛏️ Mining Optimization</h3>
+              <p className="text-xs text-muted-foreground">Boost your mining efficiency and profits</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {upgrades.filter(u => u.category === 'mining').map(upgrade => (
                   <UpgradeCard 
                     key={upgrade.id}
                     upgrade={upgrade}
                     canAfford={cash >= upgrade.cost}
                     onPurchase={handleUpgrade}
+                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
                   />
                 ))}
               </div>
@@ -992,16 +1039,18 @@ export default function Game() {
 
             <div className="h-px bg-gradient-to-r from-primary/20 via-secondary/20 to-transparent"></div>
 
+            {/* Economy */}
             <div className="space-y-2">
-              <h3 className="font-bold font-mono text-lg text-accent">Farm Expansion</h3>
-              <p className="text-xs text-muted-foreground">Expand and improve your mining facility</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                {upgrades.filter(u => u.category === 'room').map(upgrade => (
+              <h3 className="font-bold font-mono text-lg text-green-400">💰 Economy</h3>
+              <p className="text-xs text-muted-foreground">Reduce costs and maximize profits</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {upgrades.filter(u => u.category === 'economy').map(upgrade => (
                   <UpgradeCard 
                     key={upgrade.id}
                     upgrade={upgrade}
                     canAfford={cash >= upgrade.cost}
                     onPurchase={handleUpgrade}
+                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
                   />
                 ))}
               </div>
@@ -1009,16 +1058,18 @@ export default function Game() {
 
             <div className="h-px bg-gradient-to-r from-primary/20 via-secondary/20 to-transparent"></div>
 
+            {/* Automation */}
             <div className="space-y-2">
-              <h3 className="font-bold font-mono text-lg text-purple-400">Passive Bonuses</h3>
-              <p className="text-xs text-muted-foreground">Unlock special abilities and passive income</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-                {upgrades.filter(u => u.category === 'passive').map(upgrade => (
+              <h3 className="font-bold font-mono text-lg text-yellow-400">⚡ Automation</h3>
+              <p className="text-xs text-muted-foreground">Unlock automation and convenience features</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {upgrades.filter(u => u.category === 'automation').map(upgrade => (
                   <UpgradeCard 
                     key={upgrade.id}
                     upgrade={upgrade}
                     canAfford={cash >= upgrade.cost}
                     onPurchase={handleUpgrade}
+                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
                   />
                 ))}
               </div>
@@ -1027,21 +1078,27 @@ export default function Game() {
         }
         workersContent={
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {availableWorkers.map(worker => (
-              <WorkerCard 
-                key={worker.id}
-                worker={worker}
-                canAfford={cash >= worker.cost}
-                onHire={handleHireWorker}
-              />
-            ))}
+            {availableWorkers.map(worker => {
+              const workerDiscountLevel = upgrades.find(u => u.id === 'worker-discount')?.currentLevel || 0;
+              const workerDiscountMultiplier = 1 - (workerDiscountLevel * 0.15);
+              const discountedCost = Math.floor(worker.cost * workerDiscountMultiplier);
+              
+              return (
+                <WorkerCard 
+                  key={worker.id}
+                  worker={{ ...worker, cost: discountedCost }}
+                  canAfford={cash >= discountedCost}
+                  onHire={handleHireWorker}
+                />
+              );
+            })}
           </div>
         }
         tokensContent={
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold font-mono text-lg">Token Market</h3>
-              <Badge variant="outline">Switch Cost: ${Math.max(0, 1000 - ((upgrades.find(u => u.id === 'token-discount')?.currentLevel || 0) * 200)).toLocaleString()}</Badge>
+              <Badge variant="outline">Switch Cost: ${Math.max(0, 10000 - ((upgrades.find(u => u.id === 'token-discount')?.currentLevel || 0) * 1000)).toLocaleString()}</Badge>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {tokens.map((token, idx) => {
@@ -1180,53 +1237,57 @@ export default function Game() {
           </SheetHeader>
           <div className="mt-4 space-y-4">
             <div>
-              <h3 className="font-bold font-mono text-sm text-primary mb-2">PC Upgrades</h3>
+              <h3 className="font-bold font-mono text-sm text-blue-400 mb-2">🏢 Base Expansion</h3>
               <div className="grid grid-cols-2 gap-2">
-                {upgrades.filter(u => u.category === 'pc').map(upgrade => (
+                {upgrades.filter(u => u.category === 'expansion').map(upgrade => (
                   <UpgradeCard 
                     key={upgrade.id}
                     upgrade={upgrade}
                     canAfford={cash >= upgrade.cost}
                     onPurchase={handleUpgrade}
+                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
                   />
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="font-bold font-mono text-sm text-secondary mb-2">Worker Upgrades</h3>
+              <h3 className="font-bold font-mono text-sm text-purple-400 mb-2">⛏️ Mining Optimization</h3>
               <div className="grid grid-cols-2 gap-2">
-                {upgrades.filter(u => u.category === 'worker').map(upgrade => (
+                {upgrades.filter(u => u.category === 'mining').map(upgrade => (
                   <UpgradeCard 
                     key={upgrade.id}
                     upgrade={upgrade}
                     canAfford={cash >= upgrade.cost}
                     onPurchase={handleUpgrade}
+                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
                   />
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="font-bold font-mono text-sm text-accent mb-2">Farm Expansion</h3>
+              <h3 className="font-bold font-mono text-sm text-green-400 mb-2">💰 Economy</h3>
               <div className="grid grid-cols-2 gap-2">
-                {upgrades.filter(u => u.category === 'room').map(upgrade => (
+                {upgrades.filter(u => u.category === 'economy').map(upgrade => (
                   <UpgradeCard 
                     key={upgrade.id}
                     upgrade={upgrade}
                     canAfford={cash >= upgrade.cost}
                     onPurchase={handleUpgrade}
+                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
                   />
                 ))}
               </div>
             </div>
             <div>
-              <h3 className="font-bold font-mono text-sm text-purple-400 mb-2">Passive Bonuses</h3>
+              <h3 className="font-bold font-mono text-sm text-yellow-400 mb-2">⚡ Automation</h3>
               <div className="grid grid-cols-2 gap-2">
-                {upgrades.filter(u => u.category === 'passive').map(upgrade => (
+                {upgrades.filter(u => u.category === 'automation').map(upgrade => (
                   <UpgradeCard 
                     key={upgrade.id}
                     upgrade={upgrade}
                     canAfford={cash >= upgrade.cost}
                     onPurchase={handleUpgrade}
+                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
                   />
                 ))}
               </div>
@@ -1357,20 +1418,20 @@ export default function Game() {
 
       {/* Offline Earnings Modal */}
       <Dialog open={showOfflineEarningsModal} onOpenChange={setShowOfflineEarningsModal}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-[95vw] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-2xl lg:text-3xl text-center">Welcome Back! 👋</DialogTitle>
-            <DialogDescription className="text-center">
+            <DialogTitle className="text-xl sm:text-2xl lg:text-3xl text-center">Welcome Back! 👋</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm text-center">
               Your mining operation was working while you were away
             </DialogDescription>
           </DialogHeader>
           
-          <div className="bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg p-6 border-2 border-primary/50 my-4">
-            <p className="text-center text-sm text-muted-foreground mb-2">Offline Earnings (0.3x → 0.2x → 0.1x, max 24h)</p>
-            <p className="text-center text-4xl font-bold text-primary">${offlineEarningsAmount.toLocaleString()}</p>
+          <div className="bg-gradient-to-r from-primary/20 to-accent/20 rounded-lg p-4 sm:p-6 border-2 border-primary/50 my-4">
+            <p className="text-center text-xs sm:text-sm text-muted-foreground mb-2">Offline Earnings (0.3x → 0.2x → 0.1x, max 24h)</p>
+            <p className="text-center text-2xl sm:text-4xl font-bold text-primary">${offlineEarningsAmount.toLocaleString()}</p>
           </div>
 
-          <p className="text-sm text-center text-muted-foreground">
+          <p className="text-xs sm:text-sm text-center text-muted-foreground">
             Your PCs earned money automatically while you were gone. This amount has been added to your cash!
           </p>
 
@@ -1402,10 +1463,10 @@ export default function Game() {
       />
 
       <Dialog open={showRebirthModal} onOpenChange={setShowRebirthModal}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-h-[85vh] max-w-[95vw] sm:max-w-[500px] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-xl lg:text-2xl font-bold text-primary">Rebirth Available</DialogTitle>
-            <DialogDescription className="text-sm">
+            <DialogTitle className="text-lg sm:text-xl lg:text-2xl font-bold text-primary">Rebirth Available</DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
               Reset your progress but gain permanent earnings multiplier
             </DialogDescription>
           </DialogHeader>
@@ -1424,13 +1485,21 @@ export default function Game() {
                 <span className="text-sm lg:text-base text-muted-foreground">New Multiplier:</span>
                 <Badge className="bg-secondary text-xs lg:text-sm">{(1 + ((rebirthCount + 1) * 0.1)).toFixed(1)}x</Badge>
               </div>
-              <div className="pt-2 lg:pt-3 border-t border-primary/10">
-                <div className="flex justify-between items-center">
-                  <span className="text-base lg:text-lg font-bold">Cost:</span>
-                  <span className="text-base lg:text-lg font-bold text-accent">${rebirthCost.toLocaleString()}</span>
+            </div>
+
+            {/* Requirements */}
+            <div className="bg-card/60 border border-primary/20 rounded-lg p-3 lg:p-4 space-y-2">
+              <h4 className="text-sm lg:text-base font-bold text-primary">Requirements:</h4>
+              {rebirthRequirements.map((req, idx) => (
+                <div key={idx} className="flex items-center gap-2">
+                  <span className={`text-lg ${req.met ? 'text-green-400' : 'text-red-400'}`}>
+                    {req.met ? '✓' : '✗'}
+                  </span>
+                  <span className={`text-xs lg:text-sm ${req.met ? 'text-muted-foreground' : 'text-red-400'}`}>
+                    {req.description}
+                  </span>
                 </div>
-                <p className="text-xs text-muted-foreground mt-1 lg:mt-2">You have: ${cash.toLocaleString()}</p>
-              </div>
+              ))}
             </div>
 
             {rebirthCount === 0 && (
@@ -1478,7 +1547,7 @@ export default function Game() {
             </Button>
             <Button 
               onClick={handleRebirth}
-              disabled={cash < rebirthCost}
+              disabled={!canRebirth}
               className="bg-gradient-to-r from-primary to-secondary"
             >
               <Zap className="h-4 w-4 mr-2" />
@@ -1487,6 +1556,13 @@ export default function Game() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Upgrade Details Modal */}
+      <UpgradeDetailsModal 
+        upgrade={selectedUpgrade}
+        open={showUpgradeDetails}
+        onClose={() => setShowUpgradeDetails(false)}
+      />
 
     </div>
   );
