@@ -747,12 +747,6 @@ export default function GameCanvas({ pcs = [], workers = [], gridWidth = 3, grid
           {/* Fluffy clouds */}
           <Clouds />
 
-          {/* Roads */}
-          <Roads />
-
-          {/* Walking NPCs */}
-          <NPCs />
-
           {/* Scene */}
           <Floor gridWidth={gridWidth} gridHeight={gridHeight} />
           
