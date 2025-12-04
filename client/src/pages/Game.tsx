@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from '@/hooks/use-toast';
+import { useGamePersistence } from '@/hooks/useGamePersistence';
 import { Expand, Zap, Hammer, Wrench, Users, Coins, Star } from 'lucide-react';
 import bitblitzIcon from '@assets/generated_images/bitblitz_crypto_token_icon.png';
 import { INITIAL_CASH, INITIAL_GRID_SIZE, AVAILABLE_PCS, AVAILABLE_WORKERS, DEFAULT_TOKENS, DEFAULT_UPGRADES } from '@/utils/gameConstants';
@@ -99,204 +100,32 @@ export default function Game() {
   // Calculate earnings multiplier from rebirths (0.1x per rebirth)
   const earningsMultiplier = calculateEarningsMultiplier(rebirthCount);
 
-  // Initialize and load game state from localStorage on mount
-  useEffect(() => {
-    const gameState = localStorage.getItem('gameState');
-    if (gameState) {
-      try {
-        const state = JSON.parse(gameState);
-        
-        // Version check: clear old saves (increment GAME_VERSION when you want to force reset)
-        const GAME_VERSION = 2; // Increment this number in future updates to reset all saves
-        if (!state.gameVersion || state.gameVersion < GAME_VERSION) {
-          console.log('Old save detected, clearing localStorage...');
-          localStorage.removeItem('gameState');
-          // Don't reload, just let it use default state
-          return; // Exit early, game will use default state
-        }
-        
-        setCash(state.cash || 20000);
-        setTotalMined(state.totalMined || 0);
-        
-        // Backward compatibility: convert old roomSize to gridWidth/gridHeight
-        if (state.roomSize && !state.gridWidth && !state.gridHeight) {
-          setGridWidth(state.roomSize);
-          setGridHeight(state.roomSize);
-        } else {
-          setGridWidth(state.gridWidth || 3);
-          setGridHeight(state.gridHeight || 3);
-        }
-        
-        setRebirthCount(state.rebirthCount || 0);
-        if (state.ownedPCs && state.ownedPCs.length > 0) {
-          // Migrate old PC positions if coming from old roomSize system
-          const needsMigration = state.roomSize && !state.gridWidth && !state.gridHeight;
-          
-          const fixedPCs = state.ownedPCs.map((pc: any) => {
-            let newPosition = [pc.position[0], 0.1, pc.position[2]] as [number, number, number];
-            
-            // If migrating from old system, convert positions
-            // Old: -(roomSize-2) to +(roomSize-2) (centered at 0, step 2)
-            // New: -6 to gridWidth*2-6 (starts at -6, step 2)
-            if (needsMigration && state.roomSize) {
-              const oldX = pc.position[0];
-              const oldZ = pc.position[2];
-              // Convert from old centered grid to new corner-based grid
-              // Shift by -3 to move left/up
-              newPosition = [oldX - 3, 0.1, oldZ - 3] as [number, number, number];
-            }
-            
-            return {
-              ...pc,
-              position: newPosition
-            };
-          });
-          setOwnedPCs(fixedPCs);
-        }
-        if (state.ownedWorkers && state.ownedWorkers.length > 0) {
-          setOwnedWorkers(state.ownedWorkers);
-        }
-        if (state.upgrades && state.upgrades.length > 0) {
-          // Migrate upgrades: keep only the working ones and preserve their levels
-          const validUpgradeIds = ['room-space', 'mining-speed', 'offline-boost', 'worker-discount', 'rebirth-discount', 'auto-collect', 'token-discount'];
-          const migratedUpgrades = upgrades.map(upgrade => {
-            const oldUpgrade = state.upgrades.find((u: any) => u.id === upgrade.id);
-            if (oldUpgrade && validUpgradeIds.includes(upgrade.id)) {
-              // Special case: room-space must match grid size (fix for users who rebirthed before the fix)
-              if (upgrade.id === 'room-space') {
-                const gridW = state.gridWidth || 3;
-                const gridH = state.gridHeight || 3;
-                // Calculate expected level from grid size
-                let expectedLevel = 0;
-                if (gridW === 3 && gridH === 4) expectedLevel = 1;
-                else if (gridW === 4 && gridH === 4) expectedLevel = 2;
-                else if (gridW === 4 && gridH === 5) expectedLevel = 3;
-                else if (gridW === 5 && gridH === 5) expectedLevel = 4;
-                else if (gridW === 5 && gridH === 6) expectedLevel = 5;
-                else if (gridW === 6 && gridH === 6) expectedLevel = 6;
-                
-                // Calculate cost based on level
-                let cost = 20000;
-                for (let i = 0; i < expectedLevel; i++) {
-                  cost = Math.floor(cost * 2);
-                }
-                
-                return {
-                  ...upgrade,
-                  currentLevel: expectedLevel,
-                  cost: cost
-                };
-              }
-              return {
-                ...upgrade,
-                currentLevel: oldUpgrade.currentLevel
-              };
-            }
-            return upgrade;
-          });
-          setUpgrades(migratedUpgrades);
-        }
-        if (state.activeToken) {
-          setActiveToken(state.activeToken);
-        }
-        
-        // Calculate offline earnings
-        const lastLogoutTime = state.lastLogout || Date.now();
-        setLastLogout(lastLogoutTime);
-        
-        const timeAwayMs = Date.now() - lastLogoutTime;
-        const timeAwaySeconds = Math.floor(timeAwayMs / 1000);
-        
-        // Only show offline earnings if away for more than 1 minute
-        if (timeAwaySeconds > 60 && state.ownedPCs && state.ownedPCs.length > 0) {
-          // Calculate total mining rate
-          let offlineRate = 0;
-          state.ownedPCs.forEach((pc: any) => {
-            const tokensPerSecond = pc.type?.miningRate || 1;
-            const cashPerToken = 10; // Use base token value for offline
-            offlineRate += tokensPerSecond * cashPerToken;
-          });
-          
-          // Apply rebirth multiplier
-          const rebirthMultiplier = 1 + ((state.rebirthCount || 0) * 0.1);
-          offlineRate *= rebirthMultiplier;
-          
-          // Get offline boost level and calculate tier multipliers
-          const offlineBoostLevel = (state.upgrades?.find((u: any) => u.id === 'offline-boost')?.currentLevel || 0);
-          const tier1Multiplier = 0.3 + (offlineBoostLevel * 0.1);
-          const tier2Multiplier = 0.2 + (offlineBoostLevel * 0.1);
-          const tier3Multiplier = 0.1 + (offlineBoostLevel * 0.1);
-          
-          // Tiered offline earnings: (0.3+boost)x for first 3 hours, (0.2+boost)x for next 3 hours, (0.1+boost)x for next 18 hours (max 24 hours total)
-          let earnings = 0;
-          const maxOfflineTime = 24 * 60 * 60; // 24 hours in seconds
-          const effectiveTime = Math.min(timeAwaySeconds, maxOfflineTime);
-          
-          const tier1Time = 3 * 60 * 60; // First 3 hours
-          const tier2Time = 6 * 60 * 60; // Up to 6 hours total
-          
-          if (effectiveTime <= tier1Time) {
-            // First 3 hours at (0.3+boost)x
-            earnings = Math.floor(offlineRate * effectiveTime * tier1Multiplier);
-          } else if (effectiveTime <= tier2Time) {
-            // First 3 hours at (0.3+boost)x + next hours at (0.2+boost)x
-            const tier1Earnings = Math.floor(offlineRate * tier1Time * tier1Multiplier);
-            const tier2Earnings = Math.floor(offlineRate * (effectiveTime - tier1Time) * tier2Multiplier);
-            earnings = tier1Earnings + tier2Earnings;
-          } else {
-            // First 3 hours at (0.3+boost)x + next 3 hours at (0.2+boost)x + remaining at (0.1+boost)x
-            const tier1Earnings = Math.floor(offlineRate * tier1Time * tier1Multiplier);
-            const tier2Earnings = Math.floor(offlineRate * (tier2Time - tier1Time) * tier2Multiplier);
-            const tier3Earnings = Math.floor(offlineRate * (effectiveTime - tier2Time) * tier3Multiplier);
-            earnings = tier1Earnings + tier2Earnings + tier3Earnings;
-          }
-          
-          if (earnings > 0) {
-            setOfflineEarningsAmount(earnings);
-            setCash(prev => prev + earnings);
-            setTotalMined(prev => prev + earnings);
-            setShowOfflineEarningsModal(true);
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load game state:', err);
-      }
+  // Game persistence (localStorage load/save)
+  useGamePersistence({
+    cash,
+    gridWidth,
+    gridHeight,
+    rebirthCount,
+    ownedPCs,
+    ownedWorkers,
+    upgrades,
+    tokens,
+    activeToken,
+    setCash,
+    setGridWidth,
+    setGridHeight,
+    setRebirthCount,
+    setOwnedPCs,
+    setOwnedWorkers,
+    setUpgrades,
+    setTokens,
+    onOfflineEarnings: (amount, minutes) => {
+      setOfflineEarningsAmount(amount);
+      setCash(prev => prev + amount);
+      setTotalMined(prev => prev + amount);
+      setShowOfflineEarningsModal(true);
     }
-  }, []); // Only run once on mount
-
-  // Save game state to localStorage periodically
-  useEffect(() => {
-    const saveGameState = () => {
-      const gameState = {
-        gameVersion: 2, // Increment this when you want to force reset all saves
-        cash,
-        totalMined,
-        gridWidth,
-        gridHeight,
-        rebirthCount,
-        ownedPCs,
-        ownedWorkers,
-        upgrades,
-        activeToken,
-        lastLogout: Date.now()
-      };
-      localStorage.setItem('gameState', JSON.stringify(gameState));
-    };
-    
-    // Save every 30 seconds
-    const saveInterval = setInterval(saveGameState, 30000);
-    
-    // Save before unload
-    const handleBeforeUnload = () => {
-      saveGameState();
-    };
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    
-    return () => {
-      clearInterval(saveInterval);
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-  }, [cash, totalMined, gridWidth, gridHeight, rebirthCount, ownedPCs, ownedWorkers, upgrades, activeToken]);
+  });
 
   // Mining income - accumulate on PCs
   useEffect(() => {
