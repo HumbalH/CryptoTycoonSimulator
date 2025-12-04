@@ -775,13 +775,13 @@ export default function Game() {
     } else if (rebirthCount === 1) {
       requirements.push({ met: ownedWorkers.length >= 2, description: 'At least 2 Workers hired' });
     } else if (rebirthCount === 2) {
-      const hasGamingPC = ownedPCs.some(pc => pc.type.id === 'gaming-pc');
+      const hasGamingPC = ownedPCs.some(pc => pc.type.id === 'gaming');
       requirements.push({ met: hasGamingPC, description: '1 Gaming PC' });
     } else if (rebirthCount === 3) {
-      const hasServerRack = ownedPCs.some(pc => pc.type.id === 'server-rack');
+      const hasServerRack = ownedPCs.some(pc => pc.type.id === 'server');
       requirements.push({ met: hasServerRack, description: '1 Server Rack' });
     } else if (rebirthCount === 4) {
-      const hasQuantumCore = ownedPCs.some(pc => pc.type.id === 'quantum-core');
+      const hasQuantumCore = ownedPCs.some(pc => pc.type.id === 'quantum');
       requirements.push({ met: hasQuantumCore, description: '1 Quantum Core' });
     }
 
