@@ -808,7 +808,7 @@ export default function Game() {
       id: 'pc-1',
       type: availablePCs[0],
       token: 'bitblitz',
-      position: [-3, 0.1, -3],
+      position: [-6, 0.1, -6],
       pendingEarnings: 0
     }]);
     setOwnedWorkers([]);
