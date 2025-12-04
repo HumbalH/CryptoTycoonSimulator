@@ -17,19 +17,21 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useToast } from '@/hooks/use-toast';
 import { Expand, Zap, Hammer, Wrench, Users, Coins, Star } from 'lucide-react';
 import bitblitzIcon from '@assets/generated_images/bitblitz_crypto_token_icon.png';
+import { INITIAL_CASH, INITIAL_GRID_SIZE } from '@/utils/gameConstants';
+import { calculateRebirthCost, calculateEarningsMultiplier } from '@/utils/gameCalculations';
 
 export default function Game() {
   const { toast } = useToast();
   
   // Game state
   const [userId, setUserId] = useState<string | null>(null);
-  const [cash, setCash] = useState(20000);
+  const [cash, setCash] = useState(INITIAL_CASH);
   const [totalMined, setTotalMined] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [celebrityVisit, setCelebrityVisit] = useState<Celebrity | null>(null);
   const [showCelebrityModal, setShowCelebrityModal] = useState(false);
-  const [gridWidth, setGridWidth] = useState(3);
-  const [gridHeight, setGridHeight] = useState(3);
+  const [gridWidth, setGridWidth] = useState(INITIAL_GRID_SIZE);
+  const [gridHeight, setGridHeight] = useState(INITIAL_GRID_SIZE);
   const [rebirthCount, setRebirthCount] = useState(0);
   const [showRebirthModal, setShowRebirthModal] = useState(false);
   const [lastLogout, setLastLogout] = useState<number>(Date.now());
@@ -296,7 +298,7 @@ export default function Game() {
   }, 0);
 
   // Calculate earnings multiplier from rebirths (0.1x per rebirth)
-  const earningsMultiplier = 1 + (rebirthCount * 0.1);
+  const earningsMultiplier = calculateEarningsMultiplier(rebirthCount);
 
   // Initialize and load game state from localStorage on mount
   useEffect(() => {
@@ -771,23 +773,9 @@ export default function Game() {
     });
   };
 
-  // Calculate rebirth cost (easier early, exponential late)
-  let rebirthCost: number;
-  if (rebirthCount === 0) {
-    rebirthCost = 50000; // 1st rebirth - ~10 mins gameplay
-  } else if (rebirthCount === 1) {
-    rebirthCost = 300000; // 2nd rebirth - ~1 hour gameplay
-  } else if (rebirthCount === 2) {
-    rebirthCost = 1500000; // 3rd rebirth - ~5 hours gameplay
-  } else {
-    // After 3rd rebirth, multiply by 2 each time
-    rebirthCost = Math.floor(1500000 * Math.pow(2, rebirthCount - 2));
-  }
-  
-  // Apply rebirth discount upgrade
+  // Calculate rebirth cost using utility function
   const rebirthDiscountLevel = upgrades.find(u => u.id === 'rebirth-discount')?.currentLevel || 0;
-  const rebirthDiscountMultiplier = 1 - (rebirthDiscountLevel * 0.1);
-  rebirthCost = Math.floor(rebirthCost * rebirthDiscountMultiplier);
+  const rebirthCost = calculateRebirthCost(rebirthCount, rebirthDiscountLevel);
 
   // Check rebirth requirements
   const getRebirthRequirements = () => {

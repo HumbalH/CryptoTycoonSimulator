@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useToast } from './use-toast';
 import { usePCs } from './usePCs';
 import { useWorkers } from './useWorkers';
@@ -11,9 +11,9 @@ import { calculateTotalMiningRate } from '@/utils/gameCalculations';
 
 export function useGameState() {
   const { toast } = useToast();
-  const showToast = (title: string, description: string, variant?: 'default' | 'destructive') => {
+  const showToast = useCallback((title: string, description: string, variant?: 'default' | 'destructive') => {
     toast({ title, description, variant });
-  };
+  }, [toast]);
 
   // Core game state
   const [cash, setCash] = useState(INITIAL_CASH);
@@ -21,15 +21,33 @@ export function useGameState() {
   const [gridHeight, setGridHeight] = useState(INITIAL_GRID_SIZE);
   const [tutorialStep, setTutorialStep] = useState(-1);
   const [lastSaveTime, setLastSaveTime] = useState(Date.now());
+  const [rebirthCount, setRebirthCount] = useState(0);
 
-  // Initialize hooks
-  const workerHook = useWorkers({
+  // Initialize upgrade hook first (needed by others)
+  const upgradeHook = useUpgrades({
     cash,
     setCash,
-    workerDiscountLevel: 0,
+    gridWidth,
+    gridHeight,
+    setGridWidth,
+    setGridHeight,
     showToast
   });
 
+  // Get upgrade levels
+  const workerDiscountLevel = upgradeHook.getUpgradeLevel('worker-discount');
+  const tokenDiscountLevel = upgradeHook.getUpgradeLevel('token-discount');
+  const rebirthDiscountLevel = upgradeHook.getUpgradeLevel('rebirth-discount');
+
+  // Initialize worker hook
+  const workerHook = useWorkers({
+    cash,
+    setCash,
+    workerDiscountLevel,
+    showToast
+  });
+
+  // Initialize PC hook
   const pcHook = usePCs({
     gridWidth,
     gridHeight,
@@ -41,29 +59,21 @@ export function useGameState() {
     setTutorialStep
   });
 
-  const upgradeHook = useUpgrades({
-    cash,
-    setCash,
-    gridWidth,
-    gridHeight,
-    setGridWidth,
-    setGridHeight,
-    showToast
-  });
-
+  // Initialize token hook
   const tokenHook = useTokens({
     cash,
     setCash,
-    rebirthCount: 0,
-    tokenDiscountLevel: upgradeHook.getUpgradeLevel('token-discount'),
+    rebirthCount,
+    tokenDiscountLevel,
     showToast
   });
 
+  // Initialize rebirth hook
   const rebirthHook = useRebirth({
     cash,
     setCash,
     ownedPCs: pcHook.ownedPCs,
-    rebirthDiscountLevel: upgradeHook.getUpgradeLevel('rebirth-discount'),
+    rebirthDiscountLevel,
     resetPCs: pcHook.resetPCs,
     resetWorkers: workerHook.resetWorkers,
     resetUpgrade: upgradeHook.resetUpgrade,
@@ -73,8 +83,15 @@ export function useGameState() {
     showToast
   });
 
-  // Update worker hook with current discount level
-  const workerDiscountLevel = upgradeHook.getUpgradeLevel('worker-discount');
+  // Sync rebirth count
+  useEffect(() => {
+    setRebirthCount(rebirthHook.rebirthCount);
+  }, [rebirthHook.rebirthCount]);
+
+  // Unlock tokens when rebirth count changes
+  useEffect(() => {
+    tokenHook.unlockTokens();
+  }, [rebirthCount]);
 
   // Load game state on mount
   useEffect(() => {
