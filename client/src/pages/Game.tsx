@@ -16,6 +16,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from '@/hooks/use-toast';
 import { useGamePersistence } from '@/hooks/useGamePersistence';
+import BuildPCPanel from '@/components/BuildPCPanel';
+import HireWorkersPanel from '@/components/HireWorkersPanel';
+import TokensPanel from '@/components/TokensPanel';
+import UpgradesPanel from '@/components/UpgradesPanel';
 import { Expand, Zap, Hammer, Wrench, Users, Coins, Star } from 'lucide-react';
 import bitblitzIcon from '@assets/generated_images/bitblitz_crypto_token_icon.png';
 import { INITIAL_CASH, INITIAL_GRID_SIZE, AVAILABLE_PCS, AVAILABLE_WORKERS, DEFAULT_TOKENS, DEFAULT_UPGRADES } from '@/utils/gameConstants';
@@ -610,174 +614,39 @@ export default function Game() {
       <div className="hidden lg:block">
         <BottomControlPanel 
         buildPCContent={
-          <div className="space-y-4 overflow-y-auto max-h-[600px]">
-            <div className="bg-card/60 border border-primary/20 rounded p-3">
-              <p className="text-xs text-muted-foreground font-mono">
-                <span className="text-primary font-bold">Worker Requirements:</span> 1 Technician per 5 PCs | 1 Engineer per 5 Gaming PCs | 1 Expert per 5 Server Racks
-              </p>
-            </div>
-            <div>
-              <h3 className="font-bold font-mono text-sm text-muted-foreground mb-2">Available PCs</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                {availablePCs.map(pc => (
-                  <PCCard 
-                    key={pc.id}
-                    pc={pc}
-                    canAfford={cash >= pc.cost}
-                    onPurchase={handlePurchasePC}
-                  />
-                ))}
-              </div>
-            </div>
-            {ownedPCs.length > 0 && (
-              <div className="border-t border-card-border pt-3">
-                <h3 className="font-bold font-mono text-sm text-muted-foreground mb-2">Your PCs ({ownedPCs.length})</h3>
-                <div className="flex flex-wrap gap-2">
-                  {ownedPCs.map(pc => (
-                    <div key={pc.id} className="flex items-center gap-2 bg-card/60 border border-primary/30 rounded px-3 py-1">
-                      <span className="text-sm font-mono">{pc.type.name}</span>
-                      <Button 
-                        size="sm" 
-                        variant="ghost"
-                        className="h-5 w-5 p-0 text-destructive hover:text-destructive"
-                        onClick={() => handleDeletePC(pc.id)}
-                        data-testid={`button-delete-pc-${pc.id}`}
-                      >
-                        ✕
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <BuildPCPanel 
+            availablePCs={availablePCs}
+            ownedPCs={ownedPCs}
+            cash={cash}
+            onPurchase={handlePurchasePC}
+            onDelete={handleDeletePC}
+          />
         }
         upgradeContent={
-          <div className="space-y-6 pt-0">
-            {/* Base Expansion */}
-            <div className="space-y-2">
-              <h3 className="font-bold font-mono text-lg text-blue-400">🏢 Base Expansion</h3>
-              <p className="text-xs text-muted-foreground">Expand your mining facility to build more PCs</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {upgrades.filter(u => u.category === 'expansion').map(upgrade => (
-                  <UpgradeCard 
-                    key={upgrade.id}
-                    upgrade={upgrade}
-                    canAfford={cash >= upgrade.cost}
-                    onPurchase={handleUpgrade}
-                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="h-px bg-gradient-to-r from-primary/20 via-secondary/20 to-transparent"></div>
-
-            {/* Mining Optimization */}
-            <div className="space-y-2">
-              <h3 className="font-bold font-mono text-lg text-purple-400">⛏️ Mining Optimization</h3>
-              <p className="text-xs text-muted-foreground">Boost your mining efficiency and profits</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {upgrades.filter(u => u.category === 'mining').map(upgrade => (
-                  <UpgradeCard 
-                    key={upgrade.id}
-                    upgrade={upgrade}
-                    canAfford={cash >= upgrade.cost}
-                    onPurchase={handleUpgrade}
-                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="h-px bg-gradient-to-r from-primary/20 via-secondary/20 to-transparent"></div>
-
-            {/* Economy */}
-            <div className="space-y-2">
-              <h3 className="font-bold font-mono text-lg text-green-400">💰 Economy</h3>
-              <p className="text-xs text-muted-foreground">Reduce costs and maximize profits</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {upgrades.filter(u => u.category === 'economy').map(upgrade => (
-                  <UpgradeCard 
-                    key={upgrade.id}
-                    upgrade={upgrade}
-                    canAfford={cash >= upgrade.cost}
-                    onPurchase={handleUpgrade}
-                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="h-px bg-gradient-to-r from-primary/20 via-secondary/20 to-transparent"></div>
-
-            {/* Automation */}
-            <div className="space-y-2">
-              <h3 className="font-bold font-mono text-lg text-yellow-400">⚡ Automation</h3>
-              <p className="text-xs text-muted-foreground">Unlock automation and convenience features</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {upgrades.filter(u => u.category === 'automation').map(upgrade => (
-                  <UpgradeCard 
-                    key={upgrade.id}
-                    upgrade={upgrade}
-                    canAfford={cash >= upgrade.cost}
-                    onPurchase={handleUpgrade}
-                    onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
-                  />
-                ))}
-              </div>
-            </div>
-          </div>
+          <UpgradesPanel 
+            upgrades={upgrades}
+            cash={cash}
+            onPurchase={handleUpgrade}
+            onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
+          />
         }
         workersContent={
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {availableWorkers.map(worker => {
-              const workerDiscountLevel = upgrades.find(u => u.id === 'worker-discount')?.currentLevel || 0;
-              const workerDiscountMultiplier = 1 - (workerDiscountLevel * 0.15);
-              const discountedCost = Math.floor(worker.cost * workerDiscountMultiplier);
-              
-              return (
-                <WorkerCard 
-                  key={worker.id}
-                  worker={{ ...worker, cost: discountedCost }}
-                  canAfford={cash >= discountedCost}
-                  onHire={handleHireWorker}
-                />
-              );
-            })}
-          </div>
+          <HireWorkersPanel 
+            availableWorkers={availableWorkers}
+            ownedWorkers={ownedWorkers}
+            cash={cash}
+            workerDiscountLevel={upgrades.find(u => u.id === 'worker-discount')?.currentLevel || 0}
+            onHire={handleHireWorker}
+          />
         }
         tokensContent={
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold font-mono text-lg">Token Market</h3>
-              <Badge variant="outline">Switch Cost: ${Math.max(0, 10000 - ((upgrades.find(u => u.id === 'token-discount')?.currentLevel || 0) * 1000)).toLocaleString()}</Badge>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {tokens.map((token, idx) => {
-                const tokenUnlockMap: Record<string, number> = {
-                  bitblitz: 0,
-                  gala: 1,
-                  bene: 2,
-                  sol: 3,
-                  eth: 4,
-                  btc: 5
-                };
-                const requiredRebirth = tokenUnlockMap[token.id];
-                
-                return (
-                  <TokenCard 
-                    key={token.id}
-                    token={token}
-                    isActive={activeToken === token.id}
-                    onClick={() => handleTokenSelect(token.id)}
-                    rebirthCount={rebirthCount}
-                    requiredRebirth={requiredRebirth > 0 ? requiredRebirth : undefined}
-                  />
-                );
-              })}
-            </div>
-          </div>
+          <TokensPanel 
+            tokens={tokens}
+            activeToken={activeToken}
+            cash={cash}
+            tokenDiscountLevel={upgrades.find(u => u.id === 'token-discount')?.currentLevel || 0}
+            onSelect={handleTokenSelect}
+          />
         }
         celebritiesContent={
           <Card>
