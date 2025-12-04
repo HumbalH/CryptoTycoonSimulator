@@ -361,6 +361,31 @@ export default function Game() {
           const migratedUpgrades = upgrades.map(upgrade => {
             const oldUpgrade = state.upgrades.find((u: any) => u.id === upgrade.id);
             if (oldUpgrade && validUpgradeIds.includes(upgrade.id)) {
+              // Special case: room-space must match grid size (fix for users who rebirthed before the fix)
+              if (upgrade.id === 'room-space') {
+                const gridW = state.gridWidth || 3;
+                const gridH = state.gridHeight || 3;
+                // Calculate expected level from grid size
+                let expectedLevel = 0;
+                if (gridW === 3 && gridH === 4) expectedLevel = 1;
+                else if (gridW === 4 && gridH === 4) expectedLevel = 2;
+                else if (gridW === 4 && gridH === 5) expectedLevel = 3;
+                else if (gridW === 5 && gridH === 5) expectedLevel = 4;
+                else if (gridW === 5 && gridH === 6) expectedLevel = 5;
+                else if (gridW === 6 && gridH === 6) expectedLevel = 6;
+                
+                // Calculate cost based on level
+                let cost = 20000;
+                for (let i = 0; i < expectedLevel; i++) {
+                  cost = Math.floor(cost * 2);
+                }
+                
+                return {
+                  ...upgrade,
+                  currentLevel: expectedLevel,
+                  cost: cost
+                };
+              }
               return {
                 ...upgrade,
                 currentLevel: oldUpgrade.currentLevel
