@@ -136,11 +136,11 @@ export const AVAILABLE_WORKERS: WorkerType[] = [
 
 export const DEFAULT_TOKENS: Token[] = [
   { id: 'bitblitz', name: 'BitBlitz', symbol: 'BitBlitz', profitRate: 10, basePrice: 10, trend: 'up', unlocked: true, value: 10 },
-  { id: 'gala', name: 'Gala', symbol: 'GALA', profitRate: 19, basePrice: 19, trend: 'up', unlocked: false, value: 19 },
-  { id: 'bene', name: 'Bene', symbol: 'BENE', profitRate: 38, basePrice: 38, trend: 'neutral', unlocked: false, value: 38 },
-  { id: 'sol', name: 'Solana', symbol: 'SOL', profitRate: 76, basePrice: 76, trend: 'neutral', unlocked: false, value: 76 },
-  { id: 'eth', name: 'Ethereum', symbol: 'ETH', profitRate: 148, basePrice: 148, trend: 'down', unlocked: false, value: 148 },
-  { id: 'btc', name: 'Bitcoin', symbol: 'BTC', profitRate: 290, basePrice: 290, trend: 'up', unlocked: false, value: 290 }
+  { id: 'gala', name: 'Gala', symbol: 'GALA', profitRate: 15, basePrice: 15, trend: 'up', unlocked: false, value: 19 },
+  { id: 'bene', name: 'Bene', symbol: 'BENE', profitRate: 20, basePrice: 20, trend: 'neutral', unlocked: false, value: 38 },
+  { id: 'sol', name: 'Solana', symbol: 'SOL', profitRate: 25, basePrice: 25, trend: 'neutral', unlocked: false, value: 76 },
+  { id: 'eth', name: 'Ethereum', symbol: 'ETH', profitRate: 30, basePrice: 30, trend: 'down', unlocked: false, value: 148 },
+  { id: 'btc', name: 'Bitcoin', symbol: 'BTC', profitRate: 35, basePrice: 35, trend: 'up', unlocked: false, value: 290 }
 ];
 
 export const DEFAULT_UPGRADES: Upgrade[] = [

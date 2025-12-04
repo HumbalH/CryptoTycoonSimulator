@@ -17,7 +17,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useToast } from '@/hooks/use-toast';
 import { Expand, Zap, Hammer, Wrench, Users, Coins, Star } from 'lucide-react';
 import bitblitzIcon from '@assets/generated_images/bitblitz_crypto_token_icon.png';
-import { INITIAL_CASH, INITIAL_GRID_SIZE } from '@/utils/gameConstants';
+import { INITIAL_CASH, INITIAL_GRID_SIZE, AVAILABLE_PCS, AVAILABLE_WORKERS, DEFAULT_TOKENS, DEFAULT_UPGRADES } from '@/utils/gameConstants';
 import { calculateRebirthCost, calculateEarningsMultiplier } from '@/utils/gameCalculations';
 
 export default function Game() {
@@ -49,16 +49,7 @@ export default function Game() {
   const [ownedPCs, setOwnedPCs] = useState<Array<{ id: string; type: PCType; token: string; position: [number, number, number]; pendingEarnings: number }>>([
     { 
       id: 'pc-1', 
-      type: {
-        id: 'budget',
-        name: 'Budget Rig',
-        description: 'Mines 1 token per second',
-        cost: 1000,
-        miningRate: 1,
-        level: 1,
-        unlocked: true,
-        icon: 'budget'
-      },
+      type: AVAILABLE_PCS[0] as any,
       token: 'bitblitz',
       position: [-6, 0.1, -6],
       pendingEarnings: 0
@@ -70,116 +61,9 @@ export default function Game() {
     { id: 'worker-1', type: 'technician' }
   ]);
 
-  // Available PCs to purchase - todo: remove mock functionality
-  const [availablePCs] = useState<PCType[]>([
-    {
-      id: 'budget',
-      name: 'Budget Rig',
-      description: 'Mines 1 token per second',
-      cost: 1500,
-      miningRate: 1,
-      level: 0,
-      unlocked: true,
-      icon: 'budget'
-    },
-    {
-      id: 'laptop',
-      name: 'Laptop Miner',
-      description: 'Mines 2 tokens per second',
-      cost: 5000,
-      miningRate: 2,
-      level: 0,
-      unlocked: true,
-      icon: 'laptop'
-    },
-    {
-      id: 'workstation',
-      name: 'Workstation',
-      description: 'Mines 3 tokens per second',
-      cost: 35000,
-      miningRate: 3,
-      level: 0,
-      unlocked: true,
-      icon: 'workstation'
-    },
-    {
-      id: 'gaming',
-      name: 'Gaming PC',
-      description: 'Mines 4 tokens per second',
-      cost: 100000,
-      miningRate: 4,
-      level: 0,
-      unlocked: true,
-      icon: 'gaming'
-    },
-    {
-      id: 'mining-rig',
-      name: 'Mining Rig',
-      description: 'Mines 5 tokens per second',
-      cost: 250000,
-      miningRate: 5,
-      level: 0,
-      unlocked: true,
-      icon: 'mining-rig'
-    },
-    {
-      id: 'server',
-      name: 'Server Rack',
-      description: 'Mines 6 tokens per second',
-      cost: 600000,
-      miningRate: 6,
-      level: 0,
-      unlocked: true,
-      icon: 'server'
-    },
-    {
-      id: 'quantum',
-      name: 'Quantum Core',
-      description: 'Mines 7 tokens per second',
-      cost: 1500000,
-      miningRate: 7,
-      level: 0,
-      unlocked: true,
-      icon: 'quantum'
-    }
-  ]);
-
-  // Workers - todo: remove mock functionality
-  const [availableWorkers] = useState<WorkerType[]>([
-    {
-      id: 'tech1',
-      name: 'Technician',
-      description: 'Basic PC maintenance and monitoring',
-      cost: 15000,
-      efficiency: 10,
-      capacity: 3,
-      level: 0,
-      unlocked: true,
-      type: 'technician'
-    },
-    {
-      id: 'eng1',
-      name: 'Engineer',
-      description: 'Advanced optimization expert',
-      cost: 60000,
-      efficiency: 25,
-      capacity: 5,
-      level: 0,
-      unlocked: true,
-      type: 'engineer'
-    },
-    {
-      id: 'expert1',
-      name: 'Expert',
-      description: 'Elite mining specialist with AI algorithms',
-      cost: 300000,
-      efficiency: 50,
-      capacity: 10,
-      level: 0,
-      unlocked: true,
-      type: 'expert'
-    }
-  ]);
+  // Use constants for available PCs and workers
+  const availablePCs = AVAILABLE_PCS as any[];
+  const availableWorkers = AVAILABLE_WORKERS as any[];
 
   // Handle PC click to collect cash
   const handlePCClick = (pcId: string) => {
@@ -195,97 +79,12 @@ export default function Game() {
 
   // Tokens - unlocked based on rebirths. Order: bitblitz -> gala -> bene -> sol -> eth -> btc
   // Prices roughly 2x of previous but with variance
-  const [tokens, setTokens] = useState<Token[]>([
-    { id: 'bitblitz', name: 'BitBlitz', symbol: 'BitBlitz', profitRate: 10, basePrice: 10, trend: 'up', unlocked: true },
-    { id: 'gala', name: 'Gala', symbol: 'GALA', profitRate: 19, basePrice: 19, trend: 'up', unlocked: rebirthCount >= 1 },
-    { id: 'bene', name: 'Bene', symbol: 'BENE', profitRate: 38, basePrice: 38, trend: 'neutral', unlocked: rebirthCount >= 2 },
-    { id: 'sol', name: 'Solana', symbol: 'SOL', profitRate: 76, basePrice: 76, trend: 'neutral', unlocked: rebirthCount >= 3 },
-    { id: 'eth', name: 'Ethereum', symbol: 'ETH', profitRate: 148, basePrice: 148, trend: 'down', unlocked: rebirthCount >= 4 },
-    { id: 'btc', name: 'Bitcoin', symbol: 'BTC', profitRate: 290, basePrice: 290, trend: 'up', unlocked: rebirthCount >= 5 }
-  ]);
+  const [tokens, setTokens] = useState<Token[]>(DEFAULT_TOKENS);
 
   const [activeToken, setActiveToken] = useState('bitblitz');
 
   // Upgrades state
-  const [upgrades, setUpgrades] = useState<Upgrade[]>([
-    {
-      id: "room-space",
-      name: "Expand Base",
-      description: "Unlock more space to build additional PCs",
-      cost: 20000,
-      currentLevel: 0,
-      maxLevel: 6,
-      effect: "+1 grid space per level",
-      unlocked: true,
-      category: "expansion"
-    },
-    {
-      id: "mining-speed",
-      name: "Overclocking",
-      description: "Boost all PCs' mining rate with advanced overclocking techniques",
-      cost: 75000,
-      currentLevel: 0,
-      maxLevel: 5,
-      effect: "+10% mining speed per level",
-      unlocked: true,
-      category: "mining"
-    },
-    {
-      id: "offline-boost",
-      name: "Remote Monitoring",
-      description: "Increase earnings while you're offline with remote monitoring systems",
-      cost: 100000,
-      currentLevel: 0,
-      maxLevel: 3,
-      effect: "+0.1x to all offline tiers per level",
-      unlocked: true,
-      category: "mining"
-    },
-    {
-      id: "worker-discount",
-      name: "Recruitment Program",
-      description: "Reduce the cost to hire new workers with an optimized recruitment program",
-      cost: 40000,
-      currentLevel: 0,
-      maxLevel: 3,
-      effect: "-15% worker cost per level",
-      unlocked: true,
-      category: "economy"
-    },
-    {
-      id: "rebirth-discount",
-      name: "Efficiency Expert",
-      description: "Reduce the cost required for your next rebirth through efficiency improvements",
-      cost: 200000,
-      currentLevel: 0,
-      maxLevel: 3,
-      effect: "-10% rebirth cost per level",
-      unlocked: true,
-      category: "economy"
-    },
-    {
-      id: "auto-collect",
-      name: "Auto-Collection",
-      description: "Automatically collect earnings from all PCs without manual clicking",
-      cost: 150000,
-      currentLevel: 0,
-      maxLevel: 1,
-      effect: "Automatic earnings collection",
-      unlocked: true,
-      category: "automation"
-    },
-    {
-      id: "token-discount",
-      name: "Token Switch Discount",
-      description: "Reduce the cost when switching between different tokens",
-      cost: 50000,
-      currentLevel: 0,
-      maxLevel: 5,
-      effect: "-$1,000 switch cost per level",
-      unlocked: true,
-      category: "economy"
-    }
-  ]);
+  const [upgrades, setUpgrades] = useState<Upgrade[]>(DEFAULT_UPGRADES);
 
   // Calculate total mining rate (in cash/s based on PC rates and token values)
   const miningSpeedLevel = upgrades.find(u => u.id === 'mining-speed')?.currentLevel || 0;
