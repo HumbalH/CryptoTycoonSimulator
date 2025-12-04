@@ -818,6 +818,18 @@ export default function Game() {
     setRebirthCount(prev => prev + 1);
     setShowRebirthModal(false);
 
+    // Reset only room-space upgrade to level 0
+    setUpgrades(prev => prev.map(upgrade => {
+      if (upgrade.id === 'room-space') {
+        return {
+          ...upgrade,
+          currentLevel: 0,
+          cost: 20000
+        };
+      }
+      return upgrade;
+    }));
+
     toast({
       title: "Rebirth Complete!",
       description: `You are now at rebirth level ${rebirthCount + 1}. New multiplier: ${(1 + ((rebirthCount + 1) * 0.1)).toFixed(1)}x`,
