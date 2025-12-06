@@ -22,7 +22,7 @@ interface UseGamePersistenceProps {
   onOfflineEarnings?: (amount: number, minutes: number) => void;
 }
 
-const GAME_VERSION = 3;
+const GAME_VERSION = 4;
 
 export function useGamePersistence({
   cash,
@@ -65,6 +65,7 @@ export function useGamePersistence({
         if (!state.gameVersion || state.gameVersion < GAME_VERSION) {
           console.log('Old save detected, clearing localStorage...');
           localStorage.removeItem('gameState');
+          localStorage.removeItem('tutorialCompleted');
           return;
         }
 
