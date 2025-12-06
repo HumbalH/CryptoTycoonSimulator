@@ -286,3 +286,22 @@
     inset: -1px;
   }
 }
+
+@keyframes floatToTop {
+  0% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  70% {
+    opacity: 1;
+    transform: translateY(-120px) scale(1.1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-150px) scale(0.8);
+  }
+}
+
+.animate-float-to-top {
+  animation: floatToTop 1s ease-out forwards;
+}

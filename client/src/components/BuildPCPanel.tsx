@@ -1,5 +1,6 @@
 import PCCard, { PCType } from './PCCard';
 import { Button } from './ui/button';
+import { memo } from 'react';
 
 interface BuildPCPanelProps {
   availablePCs: PCType[];
@@ -9,7 +10,7 @@ interface BuildPCPanelProps {
   onDelete: (pcId: string) => void;
 }
 
-export default function BuildPCPanel({ availablePCs, ownedPCs, cash, onPurchase, onDelete }: BuildPCPanelProps) {
+const BuildPCPanel = memo(function BuildPCPanel({ availablePCs, ownedPCs, cash, onPurchase, onDelete }: BuildPCPanelProps) {
   return (
     <div className="space-y-4 overflow-y-auto max-h-[600px]">
       <div className="bg-card/60 border border-primary/20 rounded p-3">
@@ -53,4 +54,6 @@ export default function BuildPCPanel({ availablePCs, ownedPCs, cash, onPurchase,
       )}
     </div>
   );
-}
+});
+
+export default BuildPCPanel;

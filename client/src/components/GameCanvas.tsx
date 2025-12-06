@@ -9,29 +9,52 @@ interface MiningPCProps {
   token: string;
   isActive: boolean;
   id: string;
+  pendingEarnings?: number;
   onPCClick?: (pcId: string) => void;
 }
 
-function FloatingCoin({ position }: { position: [number, number, number] }) {
+function FloatingCoin({ position, isPending = false }: { position: [number, number, number]; isPending?: boolean }) {
   const coinRef = useRef<THREE.Mesh>(null);
   
   useFrame((state) => {
     if (coinRef.current) {
-      coinRef.current.position.y = position[1] + 2 + Math.sin(state.clock.elapsedTime * 2) * 0.2;
+      const baseY = isPending ? position[1] : position[1];
+      const amplitude = isPending ? 0.4 : 0.2;
+      const speed = isPending ? 3 : 2;
+      coinRef.current.position.y = baseY + Math.sin(state.clock.elapsedTime * speed) * amplitude;
       coinRef.current.rotation.y = state.clock.elapsedTime * 2;
+      
+      // Pulse scale if pending
+      if (isPending) {
+        const scale = 1 + Math.sin(state.clock.elapsedTime * 4) * 0.2;
+        coinRef.current.scale.set(scale, scale, scale);
+      }
     }
   });
 
   return (
-    <mesh ref={coinRef} position={position}>
-      <cylinderGeometry args={[0.15, 0.15, 0.05, 16]} />
-      <meshStandardMaterial 
-        color="#fbbf24"
-        emissive="#fbbf24"
-        emissiveIntensity={1}
-        metalness={0.8}
-      />
-    </mesh>
+    <group ref={coinRef} position={position}>
+      <mesh>
+        <cylinderGeometry args={[isPending ? 0.25 : 0.15, isPending ? 0.25 : 0.15, 0.05, 16]} />
+        <meshStandardMaterial 
+          color={isPending ? "#10b981" : "#fbbf24"}
+          emissive={isPending ? "#10b981" : "#fbbf24"}
+          emissiveIntensity={isPending ? 2 : 1}
+          metalness={0.8}
+        />
+      </mesh>
+      {/* $ symbol on coin when pending */}
+      {isPending && (
+        <mesh position={[0, 0, 0.03]} rotation={[0, 0, 0]}>
+          <cylinderGeometry args={[0.15, 0.15, 0.01, 16]} />
+          <meshStandardMaterial 
+            color="#ffffff"
+            emissive="#ffffff"
+            emissiveIntensity={1.5}
+          />
+        </mesh>
+      )}
+    </group>
   );
 }
 
@@ -65,8 +88,9 @@ function MiningParticles({ position, count = 2 }: { position: [number, number, n
   );
 }
 
-const MiningPC = memo(function MiningPC({ position, type, token, isActive, id, onPCClick }: MiningPCProps) {
+const MiningPC = memo(function MiningPC({ position, type, token, isActive, id, pendingEarnings = 0, onPCClick }: MiningPCProps) {
   const pcRef = useRef<THREE.Group>(null);
+  const hasPendingEarnings = pendingEarnings > 0;
 
   const config: Record<string, any> = {
     budget: { 
@@ -205,12 +229,18 @@ const MiningPC = memo(function MiningPC({ position, type, token, isActive, id, o
       {/* Mining particles and effects */}
       {isActive && (
         <>
-          <FloatingCoin position={[0, height + 0.1, 0]} />
+          {hasPendingEarnings ? (
+            // Show pulsing green coin with $ when earnings are ready to collect
+            <FloatingCoin position={[0, height + 0.5, 0]} isPending={true} />
+          ) : (
+            // Show normal gold coin when mining
+            <FloatingCoin position={[0, height + 0.1, 0]} isPending={false} />
+          )}
           <MiningParticles position={[0, height / 2 + 0.1, 0]} count={2} />
           <pointLight 
             position={[0, height / 2 + 0.1, 0]} 
-            color={color}
-            intensity={glowIntensity}
+            color={hasPendingEarnings ? '#10b981' : color}
+            intensity={hasPendingEarnings ? glowIntensity * 1.5 : glowIntensity}
             distance={3}
           />
         </>
@@ -759,6 +789,7 @@ export default function GameCanvas({ pcs = [], workers = [], gridWidth = 3, grid
               type={pc.type}
               token={pc.token}
               isActive={pc.isActive}
+              pendingEarnings={pc.pendingEarnings}
               onPCClick={onPCClick}
             />
           ))}

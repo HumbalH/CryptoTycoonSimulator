@@ -1,5 +1,6 @@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Hammer, Wrench, Users, Coins, Star } from "lucide-react";
+import { useRef, useEffect } from "react";
 
 interface BottomControlPanelProps {
   buildPCContent?: React.ReactNode;
@@ -7,6 +8,8 @@ interface BottomControlPanelProps {
   workersContent?: React.ReactNode;
   tokensContent?: React.ReactNode;
   celebritiesContent?: React.ReactNode;
+  onTabChange?: (tab: string) => void;
+  activeTab?: string;
 }
 
 export default function BottomControlPanel({
@@ -14,13 +17,24 @@ export default function BottomControlPanel({
   upgradeContent,
   workersContent,
   tokensContent,
-  celebritiesContent
+  celebritiesContent,
+  onTabChange,
+  activeTab
 }: BottomControlPanelProps) {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
+  // Scroll to top when active tab changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = 0;
+    }
+  }, [activeTab]);
+
   return (
     <div className="h-64 md:h-48 bg-gradient-to-b from-card/80 to-card/60 backdrop-blur-md border-t-2 border-primary/30 shadow-2xl" data-testid="bottom-control-panel">
-      <Tabs defaultValue="build" className="h-full flex flex-col">
+      <Tabs value={activeTab} onValueChange={onTabChange} defaultValue="build" className="h-full flex flex-col">
         <TabsList className="w-full justify-start rounded-none bg-gradient-to-r from-primary/10 to-secondary/10 border-b-2 border-primary/20 px-2 md:px-6 gap-1 md:gap-2">
-          <TabsTrigger value="build" className="gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-build">
+          <TabsTrigger value="build" className="gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-build" data-tutorial-id="build-tab">
             <Hammer className="h-4 w-4" />
             <span className="font-mono hidden md:inline">Build</span>
           </TabsTrigger>
@@ -28,7 +42,7 @@ export default function BottomControlPanel({
             <Wrench className="h-4 w-4" />
             <span className="font-mono hidden md:inline">Upgrade</span>
           </TabsTrigger>
-          <TabsTrigger value="workers" className="gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-workers">
+          <TabsTrigger value="workers" className="gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-workers" data-tutorial-id="workers-tab">
             <Users className="h-4 w-4" />
             <span className="font-mono hidden md:inline">Workers</span>
           </TabsTrigger>
@@ -42,14 +56,14 @@ export default function BottomControlPanel({
           </TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 overflow-y-auto">
-          <TabsContent value="build" className="p-2 md:p-3 m-0">
+        <div className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
+          <TabsContent value="build" className="p-2 md:p-3 m-0" data-tutorial-id="build-content">
             {buildPCContent || <div className="text-muted-foreground">Build content goes here</div>}
           </TabsContent>
           <TabsContent value="upgrade" className="px-2 md:px-6 pb-2 md:pb-6 m-0">
             {upgradeContent || <div className="text-muted-foreground">Upgrade content goes here</div>}
           </TabsContent>
-          <TabsContent value="workers" className="px-2 md:px-6 pb-2 md:pb-6 m-0">
+          <TabsContent value="workers" className="px-2 md:px-6 pb-2 md:pb-6 m-0" data-tutorial-id="workers-content">
             {workersContent || <div className="text-muted-foreground">Workers content goes here</div>}
           </TabsContent>
           <TabsContent value="tokens" className="px-2 md:px-6 pb-2 md:pb-6 m-0">

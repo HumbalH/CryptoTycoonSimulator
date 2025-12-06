@@ -10,6 +10,7 @@ export interface Celebrity {
   bonus: number;
   boostDuration?: number;
   boostMultiplier?: number;
+  minigameId?: string; // New: which minigame to play
 }
 
 interface CelebrityVisitModalProps {
@@ -17,16 +18,16 @@ interface CelebrityVisitModalProps {
   celebrity: Celebrity | null;
   onClose: () => void;
   onClaim: () => void;
+  onStartMinigame: () => void; // New: start the minigame challenge
 }
 
 const celebEmojis = ["🌟", "💫", "⭐", "🎭", "👑"];
 
-export default function CelebrityVisitModal({ open, celebrity, onClose, onClaim }: CelebrityVisitModalProps) {
+export default function CelebrityVisitModal({ open, celebrity, onClose, onClaim, onStartMinigame }: CelebrityVisitModalProps) {
   if (!celebrity) return null;
 
-  const handleClaim = () => {
-    onClaim();
-    onClose();
+  const handleStartChallenge = () => {
+    onStartMinigame();
   };
 
   const formatBonus = (bonus: number) => {
@@ -75,13 +76,20 @@ export default function CelebrityVisitModal({ open, celebrity, onClose, onClaim 
             ))}
           </div>
 
+          <div className="bg-primary/10 border border-primary/30 rounded-lg p-3 lg:p-4 text-center">
+            <p className="text-sm lg:text-base font-bold mb-2">🎮 Challenge!</p>
+            <p className="text-xs lg:text-sm text-muted-foreground">
+              Win the minigame to claim your reward!
+            </p>
+          </div>
+
           <Button 
             className="w-full" 
             size="lg"
-            onClick={handleClaim}
+            onClick={handleStartChallenge}
             data-testid="button-claim-celebrity"
           >
-            Claim Reward
+            Accept Challenge
           </Button>
         </div>
       </DialogContent>

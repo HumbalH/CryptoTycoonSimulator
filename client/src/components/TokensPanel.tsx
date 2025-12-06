@@ -1,4 +1,5 @@
 import TokenCard, { Token } from './TokenCard';
+import { memo } from 'react';
 
 interface TokensPanelProps {
   tokens: Token[];
@@ -8,7 +9,7 @@ interface TokensPanelProps {
   onSelect: (tokenId: string) => void;
 }
 
-export default function TokensPanel({ tokens, activeToken, cash, tokenDiscountLevel, onSelect }: TokensPanelProps) {
+const TokensPanel = memo(function TokensPanel({ tokens, activeToken, cash, tokenDiscountLevel, onSelect }: TokensPanelProps) {
   return (
     <div className="space-y-4 overflow-y-auto max-h-[600px]">
       <div className="bg-card/60 border border-primary/20 rounded p-3">
@@ -24,13 +25,13 @@ export default function TokensPanel({ tokens, activeToken, cash, tokenDiscountLe
               key={token.id}
               token={token}
               isActive={activeToken === token.id}
-              canAfford={cash >= token.basePrice}
-              onSelect={onSelect}
-              discountLevel={tokenDiscountLevel}
+              onClick={() => onSelect(token.id)}
             />
           ))}
         </div>
       </div>
     </div>
   );
-}
+});
+
+export default TokensPanel;

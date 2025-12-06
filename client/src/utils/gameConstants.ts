@@ -1,7 +1,7 @@
 import type { PCType, WorkerType, Token, Upgrade } from '@/types/game';
 
 export const GAME_VERSION = 2;
-export const INITIAL_CASH = 20000000; // 20M for testing
+export const INITIAL_CASH = 20000; // 20k starting cash
 export const INITIAL_GRID_SIZE = 3;
 
 export const AVAILABLE_PCS: PCType[] = [

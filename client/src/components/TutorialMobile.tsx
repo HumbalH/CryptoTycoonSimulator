@@ -6,46 +6,47 @@ import { useState, useEffect } from 'react';
 import TutorialCharacter from './TutorialCharacter';
 import TutorialOverlay from './TutorialOverlay';
 
-interface GameTutorialProps {
+interface TutorialMobileProps {
   isOpen: boolean;
   onComplete: (playerName: string, avatar: string) => void;
   hasBoughtWorker: boolean;
   hasBoughtPC: boolean;
-  workersTabClicked: boolean;
-  buildTabClicked: boolean;
   onStepChange?: (step: number) => void;
+  mobileMenuOpen?: string | null;
+  onCloseSheet?: () => void;
 }
 
-export default function GameTutorial({ 
+export default function TutorialMobile({ 
   isOpen, 
   onComplete,
   hasBoughtWorker,
   hasBoughtPC,
-  workersTabClicked,
-  buildTabClicked,
-  onStepChange
-}: GameTutorialProps) {
+  onStepChange,
+  mobileMenuOpen,
+  onCloseSheet
+}: TutorialMobileProps) {
   const [step, setStep] = useState(0);
   const [playerName, setPlayerName] = useState('');
   const [selectedAvatar, setSelectedAvatar] = useState('⚡');
   const [showCharacterModal, setShowCharacterModal] = useState(false);
+  const [dialogDismissed, setDialogDismissed] = useState(false);
 
   // Notify parent of step changes
   useEffect(() => {
     if (onStepChange) {
       onStepChange(step);
     }
-  }, [step]); // Remove onStepChange from dependencies
+  }, [step]);
 
   const avatars = ['⚡', '🔥', '💎', '🚀', '⭐', '🎮', '🤖', '👾'];
 
-  // Tutorial flow steps
+  // Mobile tutorial flow - simplified steps (no separate tab click steps)
   const tutorialSteps = [
     {
       type: 'story',
       message: "Welcome, traveler. I am BitAI, your AI guide. The year is 2047... and the world as we knew it has changed forever.",
       autoAdvance: false,
-      unlockElements: [] // Lock everything during story
+      unlockElements: []
     },
     {
       type: 'story',
@@ -74,41 +75,25 @@ export default function GameTutorial({
     },
     {
       type: 'guide',
-      message: "First things first - you need workers to operate mining equipment. Click on the WORKERS tab at the bottom to hire your first technician.",
-      highlight: 'workers-tab',
-      autoAdvance: false,
-      waitFor: 'worker-tab-click',
-      unlockElements: ['workers-tab'] // Only unlock workers tab
-    },
-    {
-      type: 'guide',
-      message: "Perfect! Now hire a Technician. They're essential for running your mining rigs. Click the BUY button to hire one for $15,000.",
+      message: "First things first - you need workers to operate mining equipment. Click on the WORKERS button at the bottom and hire a Technician for $15,000.",
       highlight: 'technician-buy',
       autoAdvance: false,
       waitFor: 'worker-bought',
-      unlockElements: ['technician-buy', 'technician-card', 'workers-content'] // Unlock technician buy button, card, and workers panel for scrolling
+      unlockElements: ['workers-tab', 'technician-buy', 'technician-card', 'workers-content']
     },
     {
       type: 'guide', 
-      message: "Excellent! Your technician is ready to work. Now let's get some mining equipment. Navigate to the BUILD tab to purchase your first PC.",
-      highlight: 'build-tab',
-      autoAdvance: false,
-      waitFor: 'build-tab-click',
-      unlockElements: ['build-tab'] // Only unlock build tab
-    },
-    {
-      type: 'guide',
-      message: "Great! Now buy a Budget Rig for $1,500. This will be your first mining machine. Click the BUY button!",
+      message: "Excellent! Your technician is ready to work. Now let's get some mining equipment. Click the BUILD button and buy a Budget Rig for $1,500.",
       highlight: 'budget-rig-buy',
       autoAdvance: false,
       waitFor: 'pc-bought',
-      unlockElements: ['budget-rig-buy', 'budget-rig-card', 'build-content'] // Unlock budget rig buy button, card, and build panel for scrolling
+      unlockElements: ['build-tab', 'budget-rig-buy', 'budget-rig-card', 'build-content']
     },
     {
       type: 'completion',
       message: "Outstanding! Your mining operation is now live! Click on PCs in the 3D view to collect earnings. Watch for celebrity visitors - win their minigame challenges for massive bonuses. Good luck, miner!",
       autoAdvance: false,
-      unlockElements: [] // Story completion, overlay will be removed
+      unlockElements: []
     }
   ];
 
@@ -133,52 +118,123 @@ export default function GameTutorial({
     onComplete(playerName || 'Anonymous Miner', selectedAvatar);
   };
 
-  // Reset scroll position when step changes to prevent position drift
+  // Reset dialog dismissed state on step change
   useEffect(() => {
-    const scrollContainers = document.querySelectorAll('[data-tutorial-id="workers-content"], [data-tutorial-id="build-content"]');
-    scrollContainers.forEach(container => {
-      if (container instanceof HTMLElement) {
-        container.scrollTop = 0;
-      }
-    });
+    setDialogDismissed(false);
   }, [step]);
 
   // Auto-advance when conditions are met
-  if (currentStep?.waitFor === 'worker-tab-click' && workersTabClicked && step === 5) {
-    setTimeout(() => setStep(6), 300);
+  if (currentStep?.waitFor === 'worker-bought' && hasBoughtWorker && step === 5) {
+    setTimeout(() => {
+      if (onCloseSheet) onCloseSheet(); // Close the workers sheet
+      setStep(6);
+    }, 500);
   }
   
-  if (currentStep?.waitFor === 'worker-bought' && hasBoughtWorker && step === 6) {
-    setTimeout(() => setStep(7), 500);
-  }
-  
-  if (currentStep?.waitFor === 'build-tab-click' && buildTabClicked && step === 7) {
-    setTimeout(() => setStep(8), 300);
-  }
-  
-  if (currentStep?.waitFor === 'pc-bought' && hasBoughtPC && step === 8) {
-    setTimeout(() => setStep(9), 500);
+  if (currentStep?.waitFor === 'pc-bought' && hasBoughtPC && step === 6) {
+    setTimeout(() => {
+      if (onCloseSheet) onCloseSheet(); // Close the build sheet
+      setStep(7);
+    }, 500);
   }
 
   if (!isOpen) return null;
 
+  // Calculate dynamic unlock elements based on mobile sheet state
+  const getDynamicUnlockElements = () => {
+    if (!currentStep?.unlockElements) return [];
+    
+    // Step 5: Buy technician
+    if (step === 5) {
+      // While dialog is visible, nothing is unlocked
+      if (!dialogDismissed) {
+        return [];
+      }
+      
+      // After dialog dismissed, check sheet state
+      if (mobileMenuOpen === 'workers') {
+        // Sheet is open, unlock the content for buying
+        console.log('Step 5: Sheet open, unlocking content');
+        return ['technician-buy', 'technician-card', 'workers-content'];
+      } else {
+        // Sheet is closed, unlock workers-tab button so they can open it
+        console.log('Step 5: Sheet closed, unlocking workers-tab button');
+        return ['workers-tab'];
+      }
+    }
+    
+    // Step 6: Buy PC
+    if (step === 6) {
+      // While dialog is visible, nothing is unlocked
+      if (!dialogDismissed) {
+        return [];
+      }
+      
+      // After dialog dismissed, check sheet state
+      if (mobileMenuOpen === 'build') {
+        // Sheet is open, unlock the content for buying
+        console.log('Step 6: Sheet open, unlocking content');
+        return ['budget-rig-buy', 'budget-rig-card', 'build-content'];
+      } else {
+        // Sheet is closed, unlock build-tab button so they can open it
+        console.log('Step 6: Sheet closed, unlocking build-tab button');
+        return ['build-tab'];
+      }
+    }
+    
+    // Other steps - use default unlock elements
+    return currentStep.unlockElements;
+  };
+
   return (
     <>
-      {/* Tutorial Overlay for highlighting and locking */}
-      {currentStep && step < tutorialSteps.length - 1 && (
+      {/* Custom overlay for mobile - only darken bottom buttons after dialog dismissed */}
+      {currentStep && step < tutorialSteps.length - 1 && (step === 5 || step === 6) && dialogDismissed && (
+        <>
+          {/* Darken non-active buttons */}
+          {['build', 'upgrade', 'workers', 'tokens', 'celebrities'].map((btnType, idx) => {
+            const unlocked = getDynamicUnlockElements();
+            const isUnlocked = 
+              (btnType === 'workers' && unlocked.includes('workers-tab')) ||
+              (btnType === 'build' && unlocked.includes('build-tab'));
+            
+            if (isUnlocked) return null; // Don't darken unlocked buttons
+            
+            return (
+              <div 
+                key={btnType}
+                className="fixed bottom-0 z-[9999] pointer-events-auto bg-black/70"
+                style={{
+                  left: `${idx * 20}%`,
+                  width: '20%',
+                  height: '80px'
+                }}
+                onClick={(e) => e.stopPropagation()}
+              />
+            );
+          })}
+        </>
+      )}
+
+      {/* Tutorial Overlay for non-mobile-button steps */}
+      {currentStep && step < tutorialSteps.length - 1 && step !== 5 && step !== 6 && (
         <TutorialOverlay 
           highlightElement={currentStep.highlight}
           darkenRest={true}
           showArrow={!!currentStep.highlight}
-          unlockElements={currentStep.unlockElements || []}
+          unlockElements={getDynamicUnlockElements()}
         />
       )}
 
       {/* Character dialog */}
-      {currentStep && !showCharacterModal && (
+      {currentStep && !showCharacterModal && !dialogDismissed && (
         <TutorialCharacter
           message={currentStep.message}
           position="left"
+          dismissible={step === 5 || step === 6}
+          onDismiss={() => {
+            setDialogDismissed(true);
+          }}
           onMessageComplete={
             currentStep.waitFor ? undefined : (step === tutorialSteps.length - 1 ? handleFinish : handleNext)
           }

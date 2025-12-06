@@ -1,4 +1,5 @@
 import UpgradeCard, { Upgrade } from './UpgradeCard';
+import { memo } from 'react';
 
 interface UpgradesPanelProps {
   upgrades: Upgrade[];
@@ -7,7 +8,7 @@ interface UpgradesPanelProps {
   onShowDetails: (upgrade: Upgrade) => void;
 }
 
-export default function UpgradesPanel({ upgrades, cash, onPurchase, onShowDetails }: UpgradesPanelProps) {
+const UpgradesPanel = memo(function UpgradesPanel({ upgrades, cash, onPurchase, onShowDetails }: UpgradesPanelProps) {
   const expansionUpgrades = upgrades.filter(u => u.category === 'expansion');
   const miningUpgrades = upgrades.filter(u => u.category === 'mining');
   const economyUpgrades = upgrades.filter(u => u.category === 'economy');
@@ -94,4 +95,6 @@ export default function UpgradesPanel({ upgrades, cash, onPurchase, onShowDetail
       )}
     </div>
   );
-}
+});
+
+export default UpgradesPanel;

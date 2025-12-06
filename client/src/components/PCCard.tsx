@@ -62,7 +62,7 @@ export default function PCCard({ pc, canAfford, onPurchase }: PCCardProps) {
   }
 
   return (
-    <Card className="hover-elevate border-2 border-primary/20 bg-gradient-to-br from-card to-card/80" data-testid={`pc-card-${pc.id}`}>
+    <Card className="hover-elevate border-2 border-primary/20 bg-gradient-to-br from-card to-card/80" data-testid={`pc-card-${pc.id}`} {...(pc.id === 'budget' && { 'data-tutorial-id': 'budget-rig-card' })}>
       <div className="flex flex-col gap-2 p-2">
         {/* Row 1: Icon, Name, Earning */}
         <div className="flex items-center gap-2">
@@ -85,6 +85,7 @@ export default function PCCard({ pc, canAfford, onPurchase }: PCCardProps) {
             disabled={!canAfford}
             onClick={() => onPurchase(pc.id)}
             data-testid={`button-purchase-${pc.id}`}
+            {...(pc.id === 'budget' && { 'data-tutorial-id': 'budget-rig-buy' })}
             className="h-6 px-2 text-xs ml-auto"
           >
             Buy

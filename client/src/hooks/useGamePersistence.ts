@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, Dispatch, SetStateAction } from 'react';
 
 interface UseGamePersistenceProps {
   cash: number;
@@ -10,18 +10,19 @@ interface UseGamePersistenceProps {
   upgrades: any[];
   tokens: any[];
   activeToken: string;
+  tutorialActive: boolean;
   setCash: (cash: number) => void;
   setGridWidth: (width: number) => void;
   setGridHeight: (height: number) => void;
   setRebirthCount: (count: number) => void;
   setOwnedPCs: (pcs: any[]) => void;
   setOwnedWorkers: (workers: any[]) => void;
-  setUpgrades: (upgrades: any[]) => void;
+  setUpgrades: Dispatch<SetStateAction<any[]>>;
   setTokens: (tokens: any[]) => void;
   onOfflineEarnings?: (amount: number, minutes: number) => void;
 }
 
-const GAME_VERSION = 2;
+const GAME_VERSION = 3;
 
 export function useGamePersistence({
   cash,
@@ -33,6 +34,7 @@ export function useGamePersistence({
   upgrades,
   tokens,
   activeToken,
+  tutorialActive,
   setCash,
   setGridWidth,
   setGridHeight,
@@ -46,6 +48,14 @@ export function useGamePersistence({
 
   // Load game state on mount
   useEffect(() => {
+    // Check if tutorial is still active - if so, clear any saved game state
+    const tutorialCompleted = localStorage.getItem('tutorialCompleted') === 'true';
+    if (!tutorialCompleted) {
+      console.log('Tutorial not completed, clearing game state...');
+      localStorage.removeItem('gameState');
+      return;
+    }
+
     const gameState = localStorage.getItem('gameState');
     if (gameState) {
       try {
@@ -170,6 +180,9 @@ export function useGamePersistence({
 
   // Auto-save every 30 seconds
   useEffect(() => {
+    // Don't save during tutorial
+    if (tutorialActive) return;
+
     const saveInterval = setInterval(() => {
       const gameState = {
         gameVersion: GAME_VERSION,
@@ -190,11 +203,14 @@ export function useGamePersistence({
     }, 30000); // Save every 30 seconds
 
     return () => clearInterval(saveInterval);
-  }, [cash, gridWidth, gridHeight, rebirthCount, ownedPCs, ownedWorkers, upgrades, tokens, activeToken]);
+  }, [cash, gridWidth, gridHeight, rebirthCount, ownedPCs, ownedWorkers, upgrades, tokens, activeToken, tutorialActive]);
 
   // Save on window close
   useEffect(() => {
     const handleBeforeUnload = () => {
+      // Don't save during tutorial
+      if (tutorialActive) return;
+
       const gameState = {
         gameVersion: GAME_VERSION,
         cash,
@@ -215,5 +231,5 @@ export function useGamePersistence({
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [cash, gridWidth, gridHeight, rebirthCount, ownedPCs, ownedWorkers, upgrades, tokens, activeToken]);
+  }, [cash, gridWidth, gridHeight, rebirthCount, ownedPCs, ownedWorkers, upgrades, tokens, activeToken, tutorialActive]);
 }

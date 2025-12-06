@@ -13,6 +13,7 @@ interface TopResourceBarProps {
   rebirthCount?: number;
   earningsMultiplier?: number;
   onRebirth?: () => void;
+  playerName?: string;
 }
 
 export default function TopResourceBar({ 
@@ -24,10 +25,11 @@ export default function TopResourceBar({
   onSettings,
   rebirthCount = 0,
   earningsMultiplier = 1,
-  onRebirth
+  onRebirth,
+  playerName = 'Miner'
 }: TopResourceBarProps) {
   const formatNumber = (num: number) => {
-    if (num >= 1000000) return `$${Math.floor(num / 1000000)}M`;
+    if (num >= 1000000) return `$${(num / 1000000).toFixed(1)}M`;
     if (num >= 1000) return `$${Math.floor(num / 1000)}K`;
     return `$${Math.floor(num)}`;
   };
@@ -38,7 +40,7 @@ export default function TopResourceBar({
       <div className="flex items-center portrait:justify-between portrait:w-full landscape:w-auto gap-1 lg:gap-6">
         <div className="flex items-center gap-1 lg:gap-2 flex-shrink-0">
           <div className="flex flex-col">
-            <h1 className="text-sm lg:text-2xl font-bold font-mono text-primary leading-tight">CRYPTO MINE</h1>
+            <h1 className="text-sm lg:text-2xl font-bold font-mono text-primary leading-tight">{playerName.toUpperCase()}'S TYCOON</h1>
             <span className="text-[8px] lg:text-[10px] text-muted-foreground leading-none">v0.8.0</span>
           </div>
           {rebirthCount > 0 && (

@@ -24,6 +24,7 @@ export default function CelebrityVisitModalExample() {
         celebrity={celebrity}
         onClose={() => setOpen(false)}
         onClaim={() => console.log('Claimed celebrity bonus!')}
+        onStartMinigame={() => console.log('Started minigame challenge!')}
       />
     </div>
   );

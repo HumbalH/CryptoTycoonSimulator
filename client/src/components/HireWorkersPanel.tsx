@@ -1,4 +1,5 @@
 import WorkerCard, { WorkerType } from './WorkerCard';
+import { memo } from 'react';
 
 interface HireWorkersPanelProps {
   availableWorkers: WorkerType[];
@@ -8,7 +9,7 @@ interface HireWorkersPanelProps {
   onHire: (workerId: string) => void;
 }
 
-export default function HireWorkersPanel({ availableWorkers, ownedWorkers, cash, workerDiscountLevel, onHire }: HireWorkersPanelProps) {
+const HireWorkersPanel = memo(function HireWorkersPanel({ availableWorkers, ownedWorkers, cash, workerDiscountLevel, onHire }: HireWorkersPanelProps) {
   const technicianCount = ownedWorkers.filter(w => w.type === 'technician').length;
   const engineerCount = ownedWorkers.filter(w => w.type === 'engineer').length;
   const expertCount = ownedWorkers.filter(w => w.type === 'expert').length;
@@ -23,17 +24,21 @@ export default function HireWorkersPanel({ availableWorkers, ownedWorkers, cash,
       <div>
         <h3 className="font-bold font-mono text-sm text-muted-foreground mb-2">Available Workers</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-          {availableWorkers.map(worker => (
-            <WorkerCard 
-              key={worker.id}
-              worker={worker}
-              canAfford={cash >= worker.cost}
-              onHire={onHire}
-              discountLevel={workerDiscountLevel}
-            />
-          ))}
+          {availableWorkers.map(worker => {
+            const discountedCost = Math.floor(worker.cost * (1 - workerDiscountLevel * 0.15));
+            return (
+              <WorkerCard 
+                key={worker.id}
+                worker={{ ...worker, cost: discountedCost }}
+                canAfford={cash >= discountedCost}
+                onHire={onHire}
+              />
+            );
+          })}
         </div>
       </div>
     </div>
   );
-}
+});
+
+export default HireWorkersPanel;

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import TopResourceBar from '@/components/TopResourceBar';
 import GameCanvas from '@/components/GameCanvas';
 import BottomControlPanel from '@/components/BottomControlPanel';
@@ -9,6 +9,7 @@ import UpgradeCard, { Upgrade } from '@/components/UpgradeCard';
 import UpgradeDetailsModal from '@/components/UpgradeDetailsModal';
 import CelebrityVisitModal, { Celebrity } from '@/components/CelebrityVisitModal';
 import GameTutorial from '@/components/GameTutorial';
+import TutorialMobile from '@/components/TutorialMobile';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,14 +17,22 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useToast } from '@/hooks/use-toast';
 import { useGamePersistence } from '@/hooks/useGamePersistence';
+import { useUpgradeLevels } from '@/hooks/useUpgradeLevels';
 import BuildPCPanel from '@/components/BuildPCPanel';
 import HireWorkersPanel from '@/components/HireWorkersPanel';
 import TokensPanel from '@/components/TokensPanel';
 import UpgradesPanel from '@/components/UpgradesPanel';
+import CashFloatingEffect from '@/components/CashFloatingEffect';
+import HashCracker from '@/components/minigames/HashCracker';
+import MemoryMatch from '@/components/minigames/MemoryMatch';
+import PricePrediction from '@/components/minigames/PricePrediction';
+import CableConnect from '@/components/minigames/CableConnect';
+import TimingChallenge from '@/components/minigames/TimingChallenge';
 import { Expand, Zap, Hammer, Wrench, Users, Coins, Star } from 'lucide-react';
 import bitblitzIcon from '@assets/generated_images/bitblitz_crypto_token_icon.png';
 import { INITIAL_CASH, INITIAL_GRID_SIZE, AVAILABLE_PCS, AVAILABLE_WORKERS, DEFAULT_TOKENS, DEFAULT_UPGRADES } from '@/utils/gameConstants';
 import { calculateRebirthCost, calculateEarningsMultiplier } from '@/utils/gameCalculations';
+import { Minigame } from '@/types/minigames';
 
 export default function Game() {
   const { toast } = useToast();
@@ -46,25 +55,38 @@ export default function Game() {
   const [showUpgradeDetails, setShowUpgradeDetails] = useState(false);
   const [showTutorial, setShowTutorial] = useState(localStorage.getItem('tutorialCompleted') !== 'true');
   const [tutorialStep, setTutorialStep] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024);
+  const [playerName, setPlayerName] = useState(localStorage.getItem('playerName') || 'Miner');
+  const [playerAvatar, setPlayerAvatar] = useState(localStorage.getItem('playerAvatar') || '⚡');
+  const [tutorialHasBoughtWorker, setTutorialHasBoughtWorker] = useState(false);
+  const [tutorialHasBoughtPC, setTutorialHasBoughtPC] = useState(false);
+  const [tutorialWorkersTabClicked, setTutorialWorkersTabClicked] = useState(false);
+  const [tutorialBuildTabClicked, setTutorialBuildTabClicked] = useState(false);
+  const [activeTab, setActiveTab] = useState('build');
+  
+  // Floating cash effect state
+  const [floatingCash, setFloatingCash] = useState<Array<{ id: string; amount: number; startX: number; startY: number }>>([]);
+  
+  // Celebrity minigame state
+  const [activeBoosts, setActiveBoosts] = useState<Array<{ type: 'multiplier' | 'boost'; value: number; expiresAt: number }>>([]);
+  const [activeCelebrityMinigame, setActiveCelebrityMinigame] = useState<string | null>(null);
+  const [pendingCelebrityReward, setPendingCelebrityReward] = useState<Celebrity | null>(null);
   
   // Mobile menu state
   const [mobileMenuOpen, setMobileMenuOpen] = useState<string | null>(null);
 
-  // PC state - todo: remove mock functionality
-  const [ownedPCs, setOwnedPCs] = useState<Array<{ id: string; type: PCType; token: string; position: [number, number, number]; pendingEarnings: number }>>([
-    { 
-      id: 'pc-1', 
-      type: AVAILABLE_PCS[0] as any,
-      token: 'bitblitz',
-      position: [-6, 0.1, -6],
-      pendingEarnings: 0
-    }
-  ]);
+  // Detect screen size changes for tutorial selection
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 1024);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // Workers state - todo: remove mock functionality
-  const [ownedWorkers, setOwnedWorkers] = useState<Array<{ id: string; type: string }>>([
-    { id: 'worker-1', type: 'technician' }
-  ]);
+  // PC state - todo: remove mock functionality
+  const [ownedPCs, setOwnedPCs] = useState<Array<{ id: string; type: PCType; token: string; position: [number, number, number]; pendingEarnings: number }>>([]);
+
+  // Workers state - start with no workers
+  const [ownedWorkers, setOwnedWorkers] = useState<Array<{ id: string; type: string }>>([]);
 
   // Use constants for available PCs and workers
   const availablePCs = AVAILABLE_PCS as any[];
@@ -74,11 +96,45 @@ export default function Game() {
   const handlePCClick = (pcId: string) => {
     const pc = ownedPCs.find(p => p.id === pcId);
     if (pc && pc.pendingEarnings > 0) {
-      setCash(prev => prev + pc.pendingEarnings);
-      setTotalMined(prev => prev + pc.pendingEarnings);
+      const earned = Math.floor(pc.pendingEarnings);
+      setCash(prev => prev + earned);
+      setTotalMined(prev => prev + earned);
       setOwnedPCs(prev => prev.map(p => 
         p.id === pcId ? { ...p, pendingEarnings: 0 } : p
       ));
+
+      // Trigger floating cash effect from center of screen (where PC would be)
+      const screenCenterX = window.innerWidth / 2;
+      const screenCenterY = window.innerHeight / 2;
+      
+      setFloatingCash(prev => [...prev, {
+        id: `cash-${Date.now()}-${pcId}`,
+        amount: earned,
+        startX: screenCenterX,
+        startY: screenCenterY,
+      }]);
+    }
+  };
+
+  // Handle tab changes for tutorial tracking
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (showTutorial && tab === 'workers' && !tutorialWorkersTabClicked) {
+      setTutorialWorkersTabClicked(true);
+    }
+    if (showTutorial && tab === 'build' && !tutorialBuildTabClicked) {
+      setTutorialBuildTabClicked(true);
+    }
+  };
+
+  // Handle mobile menu opens for tutorial tracking
+  const handleMobileMenuOpen = (menu: string) => {
+    setMobileMenuOpen(menu);
+    if (showTutorial && menu === 'workers' && !tutorialWorkersTabClicked) {
+      setTutorialWorkersTabClicked(true);
+    }
+    if (showTutorial && menu === 'build' && !tutorialBuildTabClicked) {
+      setTutorialBuildTabClicked(true);
     }
   };
 
@@ -91,18 +147,46 @@ export default function Game() {
   // Upgrades state
   const [upgrades, setUpgrades] = useState<Upgrade[]>(DEFAULT_UPGRADES);
 
-  // Calculate total mining rate (in cash/s based on PC rates and token values)
-  const miningSpeedLevel = upgrades.find(u => u.id === 'mining-speed')?.currentLevel || 0;
-  const miningSpeedBoost = 1 + (miningSpeedLevel * 0.1);
-  const totalMiningRate = ownedPCs.reduce((sum, pc) => {
-    const token = tokens.find(t => t.id === pc.token);
-    const tokensPerSecond = pc.type.miningRate * miningSpeedBoost; // How many tokens this PC mines per second with boost
-    const cashPerToken = token?.profitRate || 10; // How much each token is worth
-    return sum + (tokensPerSecond * cashPerToken);
-  }, 0);
+  // Efficient upgrade level access
+  const upgradeLevels = useUpgradeLevels(upgrades);
+
+  // Calculate total mining rate (in cash/s based on PC rates and token values) - memoized
+  const totalMiningRate = useMemo(() => {
+    const miningSpeedBoost = 1 + (upgradeLevels.miningSpeedLevel * 0.1);
+    
+    // Apply active boosts
+    let totalBoostMultiplier = 1;
+    const now = Date.now();
+    activeBoosts.forEach(boost => {
+      if (boost.expiresAt > now) {
+        if (boost.type === 'boost') {
+          totalBoostMultiplier *= boost.value;
+        }
+      }
+    });
+    
+    return ownedPCs.reduce((sum, pc) => {
+      const token = tokens.find(t => t.id === pc.token);
+      const tokensPerSecond = pc.type.miningRate * miningSpeedBoost * totalBoostMultiplier;
+      const cashPerToken = token?.profitRate || 10;
+      return sum + (tokensPerSecond * cashPerToken);
+    }, 0);
+  }, [ownedPCs, tokens, upgradeLevels.miningSpeedLevel, activeBoosts]);
 
   // Calculate earnings multiplier from rebirths (0.1x per rebirth)
   const earningsMultiplier = calculateEarningsMultiplier(rebirthCount);
+  
+  // Apply active multiplier boosts
+  const activeMultiplier = useMemo(() => {
+    let multiplier = 1;
+    const now = Date.now();
+    activeBoosts.forEach(boost => {
+      if (boost.expiresAt > now && boost.type === 'multiplier') {
+        multiplier *= boost.value;
+      }
+    });
+    return multiplier;
+  }, [activeBoosts]);
 
   // Game persistence (localStorage load/save)
   useGamePersistence({
@@ -115,6 +199,7 @@ export default function Game() {
     upgrades,
     tokens,
     activeToken,
+    tutorialActive: showTutorial,
     setCash,
     setGridWidth,
     setGridHeight,
@@ -134,17 +219,34 @@ export default function Game() {
   // Mining income - accumulate on PCs
   useEffect(() => {
     const interval = setInterval(() => {
-      const hasAutoCollect = (upgrades.find(u => u.id === 'auto-collect')?.currentLevel || 0) > 0;
-      const miningSpeedLevel = upgrades.find(u => u.id === 'mining-speed')?.currentLevel || 0;
-      const miningSpeedBoost = 1 + (miningSpeedLevel * 0.1); // +10% per level
+      const miningSpeedBoost = 1 + (upgradeLevels.miningSpeedLevel * 0.1); // +10% per level
+      
+      // Apply active boosts
+      let totalBoostMultiplier = 1;
+      const now = Date.now();
+      activeBoosts.forEach(boost => {
+        if (boost.expiresAt > now) {
+          if (boost.type === 'boost') {
+            totalBoostMultiplier *= boost.value;
+          }
+        }
+      });
+      
+      // Calculate active multiplier
+      let activeMultiplierValue = 1;
+      activeBoosts.forEach(boost => {
+        if (boost.expiresAt > now && boost.type === 'multiplier') {
+          activeMultiplierValue *= boost.value;
+        }
+      });
       
       setOwnedPCs(prev => prev.map(pc => {
         const token = tokens.find(t => t.id === pc.token);
-        const tokensPerSecond = pc.type.miningRate * miningSpeedBoost; // Apply mining speed boost
+        const tokensPerSecond = pc.type.miningRate * miningSpeedBoost * totalBoostMultiplier; // Apply mining speed boost
         const cashPerToken = token?.profitRate || 10; // Value per token
-        const income = Math.floor(tokensPerSecond * cashPerToken * earningsMultiplier);
+        const income = Math.floor(tokensPerSecond * cashPerToken * earningsMultiplier * activeMultiplierValue); // 1 second of earnings
         
-        if (hasAutoCollect) {
+        if (upgradeLevels.autoCollectEnabled) {
           // Auto-collect: add directly to cash
           setCash(c => c + income);
           setTotalMined(t => t + income);
@@ -160,24 +262,36 @@ export default function Game() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [totalMiningRate, earningsMultiplier, upgrades, tokens]);
+  }, [earningsMultiplier, upgradeLevels.miningSpeedLevel, upgradeLevels.autoCollectEnabled, tokens, activeBoosts]);
 
   // Random celebrity visits - unlock based on earnings
   useEffect(() => {
+    // Disable celebrity visits during tutorial
+    if (showTutorial) return;
+    
     const celebInterval = setInterval(() => {
-      if (Math.random() > 0.93) { // 7% chance every 10 seconds
+      // Don't spawn celebrity if a minigame is active
+      if (activeCelebrityMinigame) return;
+      
+      if (Math.random() > 0.92) { // 8% chance every 30 seconds (~4 min average)
         // Celebrity pool that grows as you earn more
         // Bonuses are based on current mining rate
         const currentRate = Math.max(totalMiningRate * earningsMultiplier, 100); // Ensure minimum bonus
         
+        // Select random minigame based on rebirth level
+        const availableMinigames: string[] = ['hash-cracker', 'price-prediction', 'timing-challenge'];
+        if (rebirthCount >= 3) availableMinigames.push('memory-match');
+        if (rebirthCount >= 5) availableMinigames.push('cable-connect');
+        const randomMinigame = availableMinigames[Math.floor(Math.random() * availableMinigames.length)];
+        
         const baseCelebrities = [
-          { id: '1', name: 'Crypto King', title: 'Legendary Investor', bonus: Math.floor(currentRate * 100), boostDuration: 30, boostMultiplier: 2 }
+          { id: '1', name: 'Crypto King', title: 'Legendary Investor', bonus: Math.floor(currentRate * 100), boostDuration: 30, boostMultiplier: 2, minigameId: randomMinigame }
         ];
         
         const unlockedCelebrities = [
-          ...(totalMined >= 50000 ? [{ id: '2', name: 'Hash Master', title: 'Mining Pioneer', bonus: Math.floor(currentRate * 200), boostDuration: 20, boostMultiplier: 1.5 }] : []),
-          ...(totalMined >= 300000 ? [{ id: '3', name: 'Blockchain Baron', title: 'Tech Visionary', bonus: Math.floor(currentRate * 300), boostDuration: 60, boostMultiplier: 3 }] : []),
-          ...(totalMined >= 1000000 ? [{ id: '4', name: 'NFT Mogul', title: 'Digital Tycoon', bonus: Math.floor(currentRate * 400), boostDuration: 45, boostMultiplier: 2.5 }] : [])
+          ...(totalMined >= 50000 ? [{ id: '2', name: 'Hash Master', title: 'Mining Pioneer', bonus: Math.floor(currentRate * 200), boostDuration: 20, boostMultiplier: 1.5, minigameId: randomMinigame }] : []),
+          ...(totalMined >= 300000 ? [{ id: '3', name: 'Blockchain Baron', title: 'Tech Visionary', bonus: Math.floor(currentRate * 300), boostDuration: 60, boostMultiplier: 3, minigameId: randomMinigame }] : []),
+          ...(totalMined >= 1000000 ? [{ id: '4', name: 'NFT Mogul', title: 'Digital Tycoon', bonus: Math.floor(currentRate * 400), boostDuration: 45, boostMultiplier: 2.5, minigameId: randomMinigame }] : [])
         ];
         
         const allCelebrities = [...baseCelebrities, ...unlockedCelebrities];
@@ -185,10 +299,10 @@ export default function Game() {
         setCelebrityVisit(celeb);
         setShowCelebrityModal(true);
       }
-    }, 10000);
+    }, 30000);
 
     return () => clearInterval(celebInterval);
-  }, [totalMined, totalMiningRate, earningsMultiplier]);
+  }, [totalMined, totalMiningRate, earningsMultiplier, rebirthCount, activeCelebrityMinigame, showTutorial]);
 
   // Update token unlocks when rebirth count changes
   useEffect(() => {
@@ -215,30 +329,34 @@ export default function Game() {
           trend: change > 0 ? 'up' : change < 0 ? 'down' : 'neutral'
         };
       }));
-    }, 5000);
+    }, 10000);
 
     return () => clearInterval(priceInterval);
   }, []);
 
-  // Count workers by type
-  const getTechnicianCount = () => ownedWorkers.filter(w => w.type === 'technician').length;
-  const getEngineerCount = () => ownedWorkers.filter(w => w.type === 'engineer').length;
-  const getExpertCount = () => ownedWorkers.filter(w => w.type === 'expert').length;
+  // Count workers by type - memoized
+  const workerCounts = useMemo(() => ({
+    technicians: ownedWorkers.filter(w => w.type === 'technician').length,
+    engineers: ownedWorkers.filter(w => w.type === 'engineer').length,
+    experts: ownedWorkers.filter(w => w.type === 'expert').length,
+  }), [ownedWorkers]);
 
-  // PC Tiers
-  const getTier1Count = () => ownedPCs.filter(pc => ['budget', 'laptop', 'workstation'].includes(pc.type.id)).length;
-  const getTier2Count = () => ownedPCs.filter(pc => ['gaming', 'mining-rig'].includes(pc.type.id)).length;
-  const getTier3Count = () => ownedPCs.filter(pc => ['server', 'quantum'].includes(pc.type.id)).length;
+  // PC Tiers - memoized
+  const pcTierCounts = useMemo(() => ({
+    tier1: ownedPCs.filter(pc => ['budget', 'laptop', 'workstation'].includes(pc.type.id)).length,
+    tier2: ownedPCs.filter(pc => ['gaming', 'mining-rig'].includes(pc.type.id)).length,
+    tier3: ownedPCs.filter(pc => ['server', 'quantum'].includes(pc.type.id)).length,
+  }), [ownedPCs]);
 
-  const handlePurchasePC = (pcId: string) => {
+  const handlePurchasePC = useCallback((pcId: string) => {
     const pc = availablePCs.find(p => p.id === pcId);
     if (!pc || cash < pc.cost) return;
 
     // Tier 1 (Budget, Laptop, Workstation): 1 Technician per 5 PCs total
     if (['budget', 'laptop', 'workstation'].includes(pcId)) {
-      const tier1Total = getTier1Count() + 1;
+      const tier1Total = pcTierCounts.tier1 + 1;
       const techsNeeded = Math.ceil(tier1Total / 5);
-      const techsHave = getTechnicianCount();
+      const techsHave = workerCounts.technicians;
 
       if (techsHave < techsNeeded) {
         toast({
@@ -252,9 +370,9 @@ export default function Game() {
 
     // Tier 2 (Gaming PC, Mining Rig): 1 Engineer per 5 PCs total
     if (['gaming', 'mining-rig'].includes(pcId)) {
-      const tier2Total = getTier2Count() + 1;
+      const tier2Total = pcTierCounts.tier2 + 1;
       const engsNeeded = Math.ceil(tier2Total / 5);
-      const engsHave = getEngineerCount();
+      const engsHave = workerCounts.engineers;
 
       if (engsHave < engsNeeded) {
         toast({
@@ -268,9 +386,9 @@ export default function Game() {
 
     // Tier 3 (Server Rack, Quantum Core): 1 Expert per 5 PCs total
     if (['server', 'quantum'].includes(pcId)) {
-      const tier3Total = getTier3Count() + 1;
+      const tier3Total = pcTierCounts.tier3 + 1;
       const expertsNeeded = Math.ceil(tier3Total / 5);
-      const expertsHave = getExpertCount();
+      const expertsHave = workerCounts.experts;
 
       if (expertsHave < expertsNeeded) {
         toast({
@@ -283,6 +401,11 @@ export default function Game() {
     }
 
     setCash(prev => prev - pc.cost);
+    
+    // Track tutorial progress
+    if (showTutorial && !tutorialHasBoughtPC) {
+      setTutorialHasBoughtPC(true);
+    }
     
     // Optimized: Find first available position without generating full grid
     // Grid matches floor position: starts at [-6, -6], expand right (gridWidth) and back (gridHeight)
@@ -323,15 +446,14 @@ export default function Game() {
       });
       setCash(prev => prev + pc.cost);
     }
-  };
+  }, [availablePCs, cash, pcTierCounts, workerCounts, ownedPCs, gridWidth, gridHeight, activeToken, tokens, toast]);
 
-  const handleHireWorker = (workerId: string) => {
+  const handleHireWorker = useCallback((workerId: string) => {
     const worker = availableWorkers.find(w => w.id === workerId);
     if (!worker) return;
     
     // Apply worker discount
-    const workerDiscountLevel = upgrades.find(u => u.id === 'worker-discount')?.currentLevel || 0;
-    const workerDiscountMultiplier = 1 - (workerDiscountLevel * 0.15);
+    const workerDiscountMultiplier = 1 - (upgradeLevels.workerDiscountLevel * 0.15);
     const discountedCost = Math.floor(worker.cost * workerDiscountMultiplier);
     
     if (cash < discountedCost) return;
@@ -339,19 +461,23 @@ export default function Game() {
     setCash(prev => prev - discountedCost);
     setOwnedWorkers(prev => [...prev, { id: `worker-${Date.now()}`, type: worker.type }]);
 
+    // Track tutorial progress
+    if (showTutorial && !tutorialHasBoughtWorker) {
+      setTutorialHasBoughtWorker(true);
+    }
+
     toast({
       title: "Worker Hired!",
       description: `${worker.name} is now maintaining your PCs`,
     });
-  };
+  }, [availableWorkers, cash, upgradeLevels.workerDiscountLevel, toast, showTutorial, tutorialHasBoughtWorker]);
 
-  const handleTokenSelect = (tokenId: string) => {
+  const handleTokenSelect = useCallback((tokenId: string) => {
     const token = tokens.find(t => t.id === tokenId);
     if (!token?.unlocked) return;
     
     const baseTokenSwitchCost = 10000;
-    const tokenDiscountUpgrade = upgrades.find(u => u.id === 'token-discount');
-    const discountAmount = (tokenDiscountUpgrade?.currentLevel || 0) * 1000;
+    const discountAmount = upgradeLevels.tokenDiscountLevel * 1000;
     const switchCost = Math.max(0, baseTokenSwitchCost - discountAmount);
     
     if (activeToken !== tokenId && cash >= switchCost) {
@@ -363,7 +489,7 @@ export default function Game() {
         description: `Now mining ${token.name} (-$${switchCost})`,
       });
     }
-  };
+  }, [tokens, activeToken, cash, upgradeLevels.tokenDiscountLevel, toast]);
 
   const handleClaimCelebrity = () => {
     if (celebrityVisit) {
@@ -374,7 +500,56 @@ export default function Game() {
         description: `+$${celebrityVisit.bonus.toLocaleString()} from ${celebrityVisit.name}`,
       });
     }
+    setCelebrityVisit(null);
+    setShowCelebrityModal(false);
+    setPendingCelebrityReward(null);
   };
+
+  const handleStartCelebrityMinigame = () => {
+    if (celebrityVisit && celebrityVisit.minigameId) {
+      setPendingCelebrityReward(celebrityVisit);
+      setActiveCelebrityMinigame(celebrityVisit.minigameId);
+      setShowCelebrityModal(false);
+    }
+  };
+
+  const handleCelebrityMinigameComplete = (gameId: string, success: boolean, data: any) => {
+    setActiveCelebrityMinigame(null);
+    
+    if (success && pendingCelebrityReward) {
+      // Award the celebrity bonus
+      setCash(prev => prev + pendingCelebrityReward.bonus);
+      setTotalMined(prev => prev + pendingCelebrityReward.bonus);
+      
+      toast({
+        title: "🎉 Challenge Won!",
+        description: `${pendingCelebrityReward.name} awarded you $${pendingCelebrityReward.bonus.toLocaleString()}!`,
+      });
+      
+      setPendingCelebrityReward(null);
+      setCelebrityVisit(null);
+    } else {
+      // Failed the minigame
+      toast({
+        title: "Challenge Failed",
+        description: "Better luck next time!",
+        variant: "destructive"
+      });
+      
+      setPendingCelebrityReward(null);
+      setCelebrityVisit(null);
+    }
+  };
+
+  // Clean up expired boosts
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const now = Date.now();
+      setActiveBoosts(prev => prev.filter(boost => boost.expiresAt > now));
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleDeletePC = (pcId: string) => {
     setOwnedPCs(prev => prev.filter(pc => pc.id !== pcId));
@@ -399,15 +574,28 @@ export default function Game() {
       p.id === pcId ? { ...p, pendingEarnings: 0 } : p
     ));
 
+    // Trigger floating cash effect from center of screen (where PC would be)
+    const screenCenterX = window.innerWidth / 2;
+    const screenCenterY = window.innerHeight / 2;
+    
+    setFloatingCash(prev => [...prev, {
+      id: `cash-${Date.now()}-${pcId}`,
+      amount: earned,
+      startX: screenCenterX,
+      startY: screenCenterY,
+    }]);
+
     toast({
       title: "Coins Collected!",
       description: `+$${earned.toLocaleString()} from ${pc.type.name}`,
     });
   };
 
-  // Calculate rebirth cost using utility function
-  const rebirthDiscountLevel = upgrades.find(u => u.id === 'rebirth-discount')?.currentLevel || 0;
-  const rebirthCost = calculateRebirthCost(rebirthCount, rebirthDiscountLevel);
+  // Calculate rebirth cost using utility function - memoized
+  const rebirthCost = useMemo(() => 
+    calculateRebirthCost(rebirthCount, upgradeLevels.rebirthDiscountLevel), 
+    [rebirthCount, upgradeLevels.rebirthDiscountLevel]
+  );
 
   // Check rebirth requirements
   const getRebirthRequirements = () => {
@@ -448,7 +636,7 @@ export default function Game() {
     }
 
     // Reset game state but keep rebirth count
-    setCash(20000);
+    setCash(INITIAL_CASH);
     setOwnedPCs([{
       id: 'pc-1',
       type: availablePCs[0],
@@ -482,7 +670,7 @@ export default function Game() {
   };
 
   const handleUpgrade = (upgradeId: string) => {
-    const upgrade = upgrades.find(u => u.id === upgradeId);
+    const upgrade = upgrades.find((u: Upgrade) => u.id === upgradeId);
     if (!upgrade || cash < upgrade.cost || upgrade.currentLevel >= upgrade.maxLevel) return;
 
     setCash(prev => prev - upgrade.cost);
@@ -535,11 +723,18 @@ export default function Game() {
     position: pc.position,
     type: pc.type.icon as 'budget' | 'gaming' | 'server',
     token: pc.token,
-    isActive: true
+    isActive: true,
+    pendingEarnings: pc.pendingEarnings
   }));
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden" data-testid="game-page">
+      {/* Floating cash effect */}
+      <CashFloatingEffect 
+        floatingCash={floatingCash}
+        onComplete={(id) => setFloatingCash(prev => prev.filter(c => c.id !== id))}
+      />
+      
       <TopResourceBar 
         cash={cash}
         miningRate={totalMiningRate}
@@ -550,6 +745,7 @@ export default function Game() {
         rebirthCount={rebirthCount}
         earningsMultiplier={earningsMultiplier}
         onRebirth={() => setShowRebirthModal(true)}
+        playerName={playerName}
       />
 
       <div className="flex-1 relative overflow-hidden">
@@ -568,7 +764,8 @@ export default function Game() {
               <Button
                 variant="ghost"
                 className="flex flex-col gap-1 h-auto py-2"
-                onClick={() => setMobileMenuOpen('build')}
+                onClick={() => handleMobileMenuOpen('build')}
+                data-tutorial-id="build-tab"
               >
                 <Hammer className="h-5 w-5" />
                 <span className="text-xs">Build</span>
@@ -576,7 +773,10 @@ export default function Game() {
               <Button
                 variant="ghost"
                 className="flex flex-col gap-1 h-auto py-2"
-                onClick={() => setMobileMenuOpen('upgrade')}
+                onClick={() => {
+                  if (showTutorial) return; // Block during tutorial
+                  setMobileMenuOpen('upgrade');
+                }}
               >
                 <Wrench className="h-5 w-5" />
                 <span className="text-xs">Upgrade</span>
@@ -584,7 +784,8 @@ export default function Game() {
               <Button
                 variant="ghost"
                 className="flex flex-col gap-1 h-auto py-2"
-                onClick={() => setMobileMenuOpen('workers')}
+                onClick={() => handleMobileMenuOpen('workers')}
+                data-tutorial-id="workers-tab"
               >
                 <Users className="h-5 w-5" />
                 <span className="text-xs">Workers</span>
@@ -592,7 +793,10 @@ export default function Game() {
               <Button
                 variant="ghost"
                 className="flex flex-col gap-1 h-auto py-2"
-                onClick={() => setMobileMenuOpen('tokens')}
+                onClick={() => {
+                  if (showTutorial) return; // Block during tutorial
+                  setMobileMenuOpen('tokens');
+                }}
               >
                 <Coins className="h-5 w-5" />
                 <span className="text-xs">Tokens</span>
@@ -600,7 +804,10 @@ export default function Game() {
               <Button
                 variant="ghost"
                 className="flex flex-col gap-1 h-auto py-2"
-                onClick={() => setMobileMenuOpen('celebrities')}
+                onClick={() => {
+                  if (showTutorial) return; // Block during tutorial
+                  setMobileMenuOpen('celebrities');
+                }}
               >
                 <Star className="h-5 w-5" />
                 <span className="text-xs">Stars</span>
@@ -635,7 +842,7 @@ export default function Game() {
             availableWorkers={availableWorkers}
             ownedWorkers={ownedWorkers}
             cash={cash}
-            workerDiscountLevel={upgrades.find(u => u.id === 'worker-discount')?.currentLevel || 0}
+            workerDiscountLevel={upgradeLevels.workerDiscountLevel}
             onHire={handleHireWorker}
           />
         }
@@ -644,7 +851,7 @@ export default function Game() {
             tokens={tokens}
             activeToken={activeToken}
             cash={cash}
-            tokenDiscountLevel={upgrades.find(u => u.id === 'token-discount')?.currentLevel || 0}
+            tokenDiscountLevel={upgradeLevels.tokenDiscountLevel}
             onSelect={handleTokenSelect}
           />
         }
@@ -694,12 +901,23 @@ export default function Game() {
             </CardContent>
           </Card>
         }
+        onTabChange={handleTabChange}
+        activeTab={activeTab}
       />
       </div>
 
       {/* Mobile Sheet Modals */}
-      <Sheet open={mobileMenuOpen === 'build'} onOpenChange={(open) => !open && setMobileMenuOpen(null)}>
-        <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+      <Sheet open={mobileMenuOpen === 'build'} onOpenChange={(open) => {
+        // Don't allow closing during tutorial
+        if (!showTutorial && !open) {
+          setMobileMenuOpen(null);
+        }
+      }}>
+        <SheetContent 
+          side="bottom" 
+          className="h-[80vh] overflow-y-auto" 
+          data-tutorial-id="build-content"
+        >
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <Hammer className="h-5 w-5" />
@@ -818,8 +1036,17 @@ export default function Game() {
         </SheetContent>
       </Sheet>
 
-      <Sheet open={mobileMenuOpen === 'workers'} onOpenChange={(open) => !open && setMobileMenuOpen(null)}>
-        <SheetContent side="bottom" className="h-[80vh] overflow-y-auto">
+      <Sheet open={mobileMenuOpen === 'workers'} onOpenChange={(open) => {
+        // Don't allow closing during tutorial
+        if (!showTutorial && !open) {
+          setMobileMenuOpen(null);
+        }
+      }}>
+        <SheetContent 
+          side="bottom" 
+          className="h-[80vh] overflow-y-auto" 
+          data-tutorial-id="workers-content"
+        >
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
               <Users className="h-5 w-5" />
@@ -849,7 +1076,7 @@ export default function Game() {
           </SheetHeader>
           <div className="mt-4 space-y-4">
             <Badge variant="outline" className="w-full justify-center">
-              Switch Cost: ${Math.max(0, 1000 - ((upgrades.find(u => u.id === 'token-discount')?.currentLevel || 0) * 200)).toLocaleString()}
+              Switch Cost: ${Math.max(0, 1000 - (upgradeLevels.tokenDiscountLevel * 200)).toLocaleString()}
             </Badge>
             <div className="grid grid-cols-1 gap-3">
               {tokens.map((token) => {
@@ -936,6 +1163,38 @@ export default function Game() {
         celebrity={celebrityVisit}
         onClose={() => setShowCelebrityModal(false)}
         onClaim={handleClaimCelebrity}
+        onStartMinigame={handleStartCelebrityMinigame}
+      />
+
+      {/* Celebrity Minigame Modals */}
+      <HashCracker
+        isOpen={activeCelebrityMinigame === 'hash-cracker'}
+        onClose={() => setActiveCelebrityMinigame(null)}
+        onComplete={(success, score) => handleCelebrityMinigameComplete('hash-cracker', success, score)}
+      />
+
+      <PricePrediction
+        isOpen={activeCelebrityMinigame === 'price-prediction'}
+        onClose={() => setActiveCelebrityMinigame(null)}
+        onComplete={(success, correct) => handleCelebrityMinigameComplete('price-prediction', success, correct)}
+      />
+
+      <TimingChallenge
+        isOpen={activeCelebrityMinigame === 'timing-challenge'}
+        onClose={() => setActiveCelebrityMinigame(null)}
+        onComplete={(success, accuracy) => handleCelebrityMinigameComplete('timing-challenge', success, accuracy)}
+      />
+
+      <MemoryMatch
+        isOpen={activeCelebrityMinigame === 'memory-match'}
+        onClose={() => setActiveCelebrityMinigame(null)}
+        onComplete={(success, moves) => handleCelebrityMinigameComplete('memory-match', success, moves)}
+      />
+
+      <CableConnect
+        isOpen={activeCelebrityMinigame === 'cable-connect'}
+        onClose={() => setActiveCelebrityMinigame(null)}
+        onComplete={(success, time) => handleCelebrityMinigameComplete('cable-connect', success, time)}
       />
 
       {/* Offline Earnings Modal */}
@@ -969,20 +1228,42 @@ export default function Game() {
         </DialogContent>
       </Dialog>
 
-      {/* Tutorial Modal */}
-      <GameTutorial
-        isOpen={showTutorial}
-        currentStep={tutorialStep}
-        onNext={() => setTutorialStep(prev => prev + 1)}
-        onSkip={() => {
-          setShowTutorial(false);
-          localStorage.setItem('tutorialCompleted', 'true');
-        }}
-        onComplete={() => {
-          setShowTutorial(false);
-          localStorage.setItem('tutorialCompleted', 'true');
-        }}
-      />
+      {/* Tutorial Modal - Desktop or Mobile based on screen size */}
+      {isMobile ? (
+        <TutorialMobile
+          isOpen={showTutorial}
+          hasBoughtWorker={tutorialHasBoughtWorker}
+          hasBoughtPC={tutorialHasBoughtPC}
+          onStepChange={setTutorialStep}
+          mobileMenuOpen={mobileMenuOpen}
+          onCloseSheet={() => setMobileMenuOpen(null)}
+          onComplete={(name: string, avatar: string) => {
+            setPlayerName(name);
+            setPlayerAvatar(avatar);
+            setShowTutorial(false);
+            localStorage.setItem('tutorialCompleted', 'true');
+            localStorage.setItem('playerName', name);
+            localStorage.setItem('playerAvatar', avatar);
+          }}
+        />
+      ) : (
+        <GameTutorial
+          isOpen={showTutorial}
+          hasBoughtWorker={tutorialHasBoughtWorker}
+          hasBoughtPC={tutorialHasBoughtPC}
+          workersTabClicked={tutorialWorkersTabClicked}
+          buildTabClicked={tutorialBuildTabClicked}
+          onStepChange={setTutorialStep}
+          onComplete={(name: string, avatar: string) => {
+            setPlayerName(name);
+            setPlayerAvatar(avatar);
+            setShowTutorial(false);
+            localStorage.setItem('tutorialCompleted', 'true');
+            localStorage.setItem('playerName', name);
+            localStorage.setItem('playerAvatar', avatar);
+          }}
+        />
+      )}
 
       <Dialog open={showRebirthModal} onOpenChange={setShowRebirthModal}>
         <DialogContent className="max-h-[85vh] max-w-[95vw] sm:max-w-[500px] overflow-y-auto">
@@ -1084,6 +1365,12 @@ export default function Game() {
         upgrade={selectedUpgrade}
         open={showUpgradeDetails}
         onClose={() => setShowUpgradeDetails(false)}
+      />
+
+      {/* Cash Floating Effect */}
+      <CashFloatingEffect 
+        floatingCash={floatingCash}
+        onComplete={(id) => setFloatingCash(prev => prev.filter(f => f.id !== id))}
       />
 
     </div>

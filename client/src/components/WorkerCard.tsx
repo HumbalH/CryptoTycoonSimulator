@@ -49,7 +49,11 @@ export default function WorkerCard({ worker, canAfford, onHire }: WorkerCardProp
   }
 
   return (
-    <Card className="hover-elevate border-2 border-secondary/20 bg-gradient-to-br from-card to-card/80" data-testid={`worker-card-${worker.id}`}>
+    <Card 
+      className="hover-elevate border-2 border-secondary/20 bg-gradient-to-br from-card to-card/80" 
+      data-testid={`worker-card-${worker.id}`}
+      data-tutorial-id={worker.id === 'technician' ? 'technician-card' : undefined}
+    >
       <div className="flex flex-col gap-2 p-2">
         {/* Row 1: Icon, Name, Efficiency */}
         <div className="flex items-center gap-2">
@@ -73,6 +77,7 @@ export default function WorkerCard({ worker, canAfford, onHire }: WorkerCardProp
             disabled={!canAfford}
             onClick={() => onHire(worker.id)}
             data-testid={`button-hire-${worker.id}`}
+            data-tutorial-id={worker.id === 'technician' ? 'technician-buy' : undefined}
             className="h-6 px-2 text-xs ml-auto"
           >
             Hire
