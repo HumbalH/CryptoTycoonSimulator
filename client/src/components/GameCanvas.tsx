@@ -14,7 +14,7 @@ interface MiningPCProps {
 }
 
 function FloatingCoin({ position, isPending = false }: { position: [number, number, number]; isPending?: boolean }) {
-  const coinRef = useRef<THREE.Mesh>(null);
+  const coinRef = useRef<THREE.Group>(null);
   
   useFrame((state) => {
     if (coinRef.current) {
@@ -728,6 +728,7 @@ interface GameCanvasProps {
     type: 'budget' | 'gaming' | 'server' | 'laptop' | 'workstation' | 'mining-rig' | 'quantum';
     token: string;
     isActive: boolean;
+    pendingEarnings?: number;
   }>;
   workers?: Array<{ id: string }>;
   gridWidth?: number;
