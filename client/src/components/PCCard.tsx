@@ -30,6 +30,17 @@ const iconMap = {
   quantum: "🔮"
 };
 
+// Map PC types to provided image filenames in /public/pcs
+const imageFileMap: Record<PCType["icon"], string> = {
+  budget: "4.png",
+  laptop: "3.png",
+  workstation: "1.png",
+  gaming: "2.png",
+  "mining-rig": "5.png",
+  server: "6.png",
+  quantum: "7.png"
+};
+
 export default function PCCard({ pc, canAfford, onPurchase }: PCCardProps) {
   const formatCost = (cost: number) => {
     if (cost >= 1000000) return `$${(cost / 1000000).toFixed(1)}M`;
@@ -37,13 +48,19 @@ export default function PCCard({ pc, canAfford, onPurchase }: PCCardProps) {
     return `$${cost}`;
   };
 
+  // Image path for PCs; user will provide assets under public/pcs
+  const pcImageSrc = `/pcs/${imageFileMap[pc.icon] ?? `${pc.id}.png`}`;
+
   if (!pc.unlocked) {
     return (
-      <Card className="opacity-60" data-testid={`pc-card-${pc.id}`}>
+      <Card className="opacity-70 bg-gradient-to-br from-orange-50 via-amber-50 to-white border-2 border-muted/40 rounded-xl shadow-sm" data-testid={`pc-card-${pc.id}`}>
         <div className="flex flex-col gap-2 p-2">
-          {/* Row 1: Icon, Name, Earning */}
+          {/* Row 1: Image + Name */}
           <div className="flex items-center gap-2">
-            <span className="text-2xl opacity-50 flex-shrink-0">{iconMap[pc.icon]}</span>
+            <div className="relative h-12 w-12 rounded-lg overflow-hidden border border-muted/40 bg-white flex-shrink-0">
+              <img src={pcImageSrc} alt={pc.name} loading="lazy" className="h-full w-full object-cover opacity-60" />
+              <div className="absolute inset-0 bg-white/50" />
+            </div>
             <div className="flex-1 min-w-0">
               <h3 className="font-bold font-mono text-xs">{pc.name}</h3>
             </div>
@@ -62,11 +79,14 @@ export default function PCCard({ pc, canAfford, onPurchase }: PCCardProps) {
   }
 
   return (
-    <Card className="hover-elevate border-2 border-primary/20 bg-gradient-to-br from-card to-card/80" data-testid={`pc-card-${pc.id}`} {...(pc.id === 'budget' && { 'data-tutorial-id': 'budget-rig-card' })}>
+    <Card className="hover-elevate border-2 border-primary/25 bg-gradient-to-br from-orange-50 via-amber-50 to-white rounded-xl shadow-md" data-testid={`pc-card-${pc.id}`} {...(pc.id === 'budget' && { 'data-tutorial-id': 'budget-rig-card' })}>
       <div className="flex flex-col gap-2 p-2">
-        {/* Row 1: Icon, Name, Earning */}
+        {/* Row 1: Image + Name + Rate */}
         <div className="flex items-center gap-2">
-          <span className="text-2xl drop-shadow-lg flex-shrink-0">{iconMap[pc.icon]}</span>
+          <div className="relative h-12 w-12 rounded-lg overflow-hidden border-2 border-white shadow-sm bg-white flex-shrink-0">
+            <img src={pcImageSrc} alt={pc.name} loading="lazy" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 border border-primary/20 rounded-lg" />
+          </div>
           <div className="flex-1 min-w-0">
             <h3 className="font-bold font-mono text-xs">{pc.name}</h3>
           </div>

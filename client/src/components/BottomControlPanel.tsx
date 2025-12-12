@@ -31,32 +31,57 @@ export default function BottomControlPanel({
   }, [activeTab]);
 
   return (
-    <div className="h-64 md:h-48 bg-gradient-to-b from-card/80 to-card/60 backdrop-blur-md border-t-2 border-primary/30 shadow-2xl" data-testid="bottom-control-panel">
+    <div className="relative h-64 md:h-48 bg-gradient-to-br from-orange-400 via-amber-400 to-yellow-400 border-t-4 border-orange-600/40 shadow-2xl" data-testid="bottom-control-panel">
+      {/* Decorative bottom stripe */}
+      <div className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-orange-300 via-yellow-300 to-orange-300"></div>
+      
       <Tabs value={activeTab} onValueChange={onTabChange} defaultValue="build" className="h-full flex flex-col">
-        <TabsList className="w-full justify-start rounded-none bg-gradient-to-r from-primary/10 to-secondary/10 border-b-2 border-primary/20 px-2 md:px-6 gap-1 md:gap-2">
-          <TabsTrigger value="build" className="gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-build" data-tutorial-id="build-tab">
-            <Hammer className="h-4 w-4" />
-            <span className="font-mono hidden md:inline">Build</span>
+        <TabsList className="w-full justify-start bg-white/20 backdrop-blur-sm border-b-2 border-white/30 px-2 md:px-4 gap-1 md:gap-2 h-12 md:h-14">
+          <TabsTrigger 
+            value="build" 
+            className="gap-1.5 md:gap-2 px-3 md:px-5 h-9 md:h-10 rounded-lg font-bold text-xs md:text-sm data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg data-[state=inactive]:text-white/90 data-[state=inactive]:hover:bg-white/10 transition-all" 
+            data-testid="tab-build" 
+            data-tutorial-id="build-tab"
+          >
+            <Hammer className="h-4 w-4 md:h-5 md:w-5" strokeWidth={2.5} />
+            <span className="hidden md:inline uppercase tracking-wide">Build</span>
           </TabsTrigger>
-          <TabsTrigger value="upgrade" className="gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-upgrade">
-            <Wrench className="h-4 w-4" />
-            <span className="font-mono hidden md:inline">Upgrade</span>
+          <TabsTrigger 
+            value="upgrade" 
+            className="gap-1.5 md:gap-2 px-3 md:px-5 h-9 md:h-10 rounded-lg font-bold text-xs md:text-sm data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg data-[state=inactive]:text-white/90 data-[state=inactive]:hover:bg-white/10 transition-all" 
+            data-testid="tab-upgrade"
+          >
+            <Wrench className="h-4 w-4 md:h-5 md:w-5" strokeWidth={2.5} />
+            <span className="hidden md:inline uppercase tracking-wide">Upgrade</span>
           </TabsTrigger>
-          <TabsTrigger value="workers" className="gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-workers" data-tutorial-id="workers-tab">
-            <Users className="h-4 w-4" />
-            <span className="font-mono hidden md:inline">Workers</span>
+          <TabsTrigger 
+            value="workers" 
+            className="gap-1.5 md:gap-2 px-3 md:px-5 h-9 md:h-10 rounded-lg font-bold text-xs md:text-sm data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg data-[state=inactive]:text-white/90 data-[state=inactive]:hover:bg-white/10 transition-all" 
+            data-testid="tab-workers" 
+            data-tutorial-id="workers-tab"
+          >
+            <Users className="h-4 w-4 md:h-5 md:w-5" strokeWidth={2.5} />
+            <span className="hidden md:inline uppercase tracking-wide">Workers</span>
           </TabsTrigger>
-          <TabsTrigger value="tokens" className="gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-tokens">
-            <Coins className="h-4 w-4" />
-            <span className="font-mono hidden md:inline">Tokens</span>
+          <TabsTrigger 
+            value="tokens" 
+            className="gap-1.5 md:gap-2 px-3 md:px-5 h-9 md:h-10 rounded-lg font-bold text-xs md:text-sm data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg data-[state=inactive]:text-white/90 data-[state=inactive]:hover:bg-white/10 transition-all" 
+            data-testid="tab-tokens"
+          >
+            <Coins className="h-4 w-4 md:h-5 md:w-5" strokeWidth={2.5} />
+            <span className="hidden md:inline uppercase tracking-wide">Tokens</span>
           </TabsTrigger>
-          <TabsTrigger value="celebrities" className="gap-1 md:gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground" data-testid="tab-celebrities">
-            <Star className="h-4 w-4" />
-            <span className="font-mono hidden md:inline">Celebrities</span>
+          <TabsTrigger 
+            value="celebrities" 
+            className="gap-1.5 md:gap-2 px-3 md:px-5 h-9 md:h-10 rounded-lg font-bold text-xs md:text-sm data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-lg data-[state=inactive]:text-white/90 data-[state=inactive]:hover:bg-white/10 transition-all" 
+            data-testid="tab-celebrities"
+          >
+            <Star className="h-4 w-4 md:h-5 md:w-5" strokeWidth={2.5} />
+            <span className="hidden md:inline uppercase tracking-wide">Celebrities</span>
           </TabsTrigger>
         </TabsList>
 
-        <div className="flex-1 overflow-y-auto" ref={scrollContainerRef}>
+        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-orange-50/90 to-amber-50/80" ref={scrollContainerRef}>
           <TabsContent value="build" className="p-2 md:p-3 m-0" data-tutorial-id="build-content">
             {buildPCContent || <div className="text-muted-foreground">Build content goes here</div>}
           </TabsContent>

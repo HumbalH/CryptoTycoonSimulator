@@ -41,7 +41,7 @@ export default function Game() {
   const [userId, setUserId] = useState<string | null>(null);
   const [cash, setCash] = useState(INITIAL_CASH);
   const [totalMined, setTotalMined] = useState(0);
-  const [isDarkMode, setIsDarkMode] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const [celebrityVisit, setCelebrityVisit] = useState<Celebrity | null>(null);
   const [showCelebrityModal, setShowCelebrityModal] = useState(false);
   const [gridWidth, setGridWidth] = useState(INITIAL_GRID_SIZE);
@@ -63,6 +63,13 @@ export default function Game() {
   const [tutorialWorkersTabClicked, setTutorialWorkersTabClicked] = useState(false);
   const [tutorialBuildTabClicked, setTutorialBuildTabClicked] = useState(false);
   const [activeTab, setActiveTab] = useState('build');
+
+  // Mining floor grid start (must match Floor component)
+  // Must mirror Floor's start: centerX - floorWidth/2, centerZ - floorDepth/2
+  // Floor uses centerX = -15 + floorWidth/2 and centerZ = -4 + floorDepth/2
+  // Therefore grid starts at x=-15, z=-4
+  const GRID_START_X = -15;
+  const GRID_START_Z = -4;
   
   // Floating cash effect state
   const [floatingCash, setFloatingCash] = useState<Array<{ id: string; amount: number; startX: number; startY: number }>>([]);
@@ -74,6 +81,13 @@ export default function Game() {
   
   // Mobile menu state
   const [mobileMenuOpen, setMobileMenuOpen] = useState<string | null>(null);
+  
+  // Desktop panel state
+  const [desktopPanelOpen, setDesktopPanelOpen] = useState(true);
+  const [desktopActiveTab, setDesktopActiveTab] = useState('build');
+
+  // PC dragging state
+  const [selectedPCId, setSelectedPCId] = useState<string | null>(null);
 
   // Detect screen size changes for tutorial selection
   useEffect(() => {
@@ -114,6 +128,18 @@ export default function Game() {
         startY: screenCenterY,
       }]);
     }
+  };
+
+  // Handle PC position change from dragging
+  const handlePCPositionChange = (pcId: string, newPosition: [number, number, number]) => {
+    setOwnedPCs(prev => prev.map(pc => 
+      pc.id === pcId ? { ...pc, position: newPosition } : pc
+    ));
+  };
+
+  // Handle PC selection for dragging
+  const handleSelectPC = (pcId: string) => {
+    setSelectedPCId(selectedPCId === pcId ? null : pcId);
   };
 
   // Handle tab changes for tutorial tracking
@@ -188,9 +214,19 @@ export default function Game() {
     return multiplier;
   }, [activeBoosts]);
 
+  // Keep menus open/focused during tutorial start
+  useEffect(() => {
+    if (showTutorial) {
+      setMobileMenuOpen('build');
+      setDesktopPanelOpen(true);
+      setActiveTab('build');
+    }
+  }, [showTutorial]);
+
   // Game persistence (localStorage load/save)
   useGamePersistence({
     cash,
+    totalMined,
     gridWidth,
     gridHeight,
     rebirthCount,
@@ -201,6 +237,7 @@ export default function Game() {
     activeToken,
     tutorialActive: showTutorial,
     setCash,
+    setTotalMined,
     setGridWidth,
     setGridHeight,
     setRebirthCount,
@@ -408,11 +445,10 @@ export default function Game() {
     }
     
     // Optimized: Find first available position without generating full grid
-    // Grid matches floor position: starts at [-6, -6], expand right (gridWidth) and back (gridHeight)
+    // Grid matches Floor: starts at [GRID_START_X, GRID_START_Z], expands right (gridWidth) and back (gridHeight)
     let foundPosition: [number, number, number] | null = null;
-    
-    for (let x = -6; x < -6 + gridWidth * 2 && !foundPosition; x += 2) {
-      for (let z = -6; z < -6 + gridHeight * 2 && !foundPosition; z += 2) {
+    for (let x = GRID_START_X; x < GRID_START_X + gridWidth * 2 && !foundPosition; x += 2) {
+      for (let z = GRID_START_Z; z < GRID_START_Z + gridHeight * 2 && !foundPosition; z += 2) {
         const pos: [number, number, number] = [x, 0.1, z];
         // Check if this position is available
         const isOccupied = ownedPCs.some(owned => 
@@ -490,6 +526,60 @@ export default function Game() {
       });
     }
   }, [tokens, activeToken, cash, upgradeLevels.tokenDiscountLevel, toast]);
+
+  // One-time migration: move any existing PCs to the new floor grid
+  useEffect(() => {
+    const flagKey = 'migratedToNewGrid_v1';
+    if (localStorage.getItem(flagKey) === 'true') return;
+    if (!ownedPCs.length) return;
+
+    const floorWidth = gridWidth * 2;
+    const floorDepth = gridHeight * 2;
+    const within = (pos: [number, number, number]) =>
+      pos[0] >= GRID_START_X - 0.5 && pos[0] < GRID_START_X + floorWidth + 0.5 &&
+      pos[2] >= GRID_START_Z - 0.5 && pos[2] < GRID_START_Z + floorDepth + 0.5;
+
+    const needsMigration = ownedPCs.some(pc => !within(pc.position));
+    if (!needsMigration) return;
+
+    // Assign PCs to first available slots on the new grid
+    const occupied = new Set<string>();
+    const key = (x: number, z: number) => `${x},${z}`;
+    const assignments = new Map<string, [number, number, number]>();
+
+    for (let x = GRID_START_X; x < GRID_START_X + floorWidth; x += 2) {
+      for (let z = GRID_START_Z; z < GRID_START_Z + floorDepth; z += 2) {
+        occupied.add(key(x, z));
+      }
+    }
+    // Mark already placed PCs that are within bounds as occupied
+    ownedPCs.forEach(pc => {
+      if (within(pc.position)) {
+        occupied.delete(key(pc.position[0], pc.position[2]));
+      }
+    });
+
+    // Reassign those outside bounds to free slots
+    for (const pc of ownedPCs) {
+      if (within(pc.position)) continue;
+      let placed: [number, number, number] | null = null;
+      outer: for (let x = GRID_START_X; x < GRID_START_X + floorWidth; x += 2) {
+        for (let z = GRID_START_Z; z < GRID_START_Z + floorDepth; z += 2) {
+          if (!occupied.has(key(x, z))) {
+            placed = [x as number, 0.1 as number, z as number];
+            occupied.add(key(x, z));
+            break outer;
+          }
+        }
+      }
+      if (placed) assignments.set(pc.id, placed);
+    }
+
+    if (assignments.size > 0) {
+      setOwnedPCs(prev => prev.map(pc => assignments.get(pc.id) ? { ...pc, position: assignments.get(pc.id)! } : pc));
+      localStorage.setItem(flagKey, 'true');
+    }
+  }, [ownedPCs, gridWidth, gridHeight]);
 
   const handleClaimCelebrity = () => {
     if (celebrityVisit) {
@@ -641,7 +731,7 @@ export default function Game() {
       id: 'pc-1',
       type: availablePCs[0],
       token: 'bitblitz',
-      position: [-6, 0.1, -6],
+      position: [GRID_START_X, 0.1, GRID_START_Z],
       pendingEarnings: 0
     }]);
     setOwnedWorkers([]);
@@ -740,7 +830,7 @@ export default function Game() {
         miningRate={totalMiningRate}
         totalMined={totalMined}
         isDarkMode={isDarkMode}
-        onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
+        onToggleDarkMode={undefined}
         onSettings={() => console.log('Settings opened')}
         rebirthCount={rebirthCount}
         earningsMultiplier={earningsMultiplier}
@@ -755,6 +845,12 @@ export default function Game() {
           gridWidth={gridWidth}
           gridHeight={gridHeight}
           onPCClick={handlePCClick}
+          onPCPositionChange={handlePCPositionChange}
+          onSelectPC={handleSelectPC}
+          selectedPCId={selectedPCId}
+          gridStartX={GRID_START_X}
+          gridStartZ={GRID_START_Z}
+          enableDragging={true}
         />
         
         {/* Mobile floating menu buttons */}
@@ -817,93 +913,75 @@ export default function Game() {
         </div>
       </div>
 
-      {/* Desktop bottom panel - hidden on mobile */}
-      <div className="hidden lg:block">
-        <BottomControlPanel 
-        buildPCContent={
-          <BuildPCPanel 
-            availablePCs={availablePCs}
-            ownedPCs={ownedPCs}
-            cash={cash}
-            onPurchase={handlePurchasePC}
-            onDelete={handleDeletePC}
-          />
-        }
-        upgradeContent={
-          <UpgradesPanel 
-            upgrades={upgrades}
-            cash={cash}
-            onPurchase={handleUpgrade}
-            onShowDetails={(u) => { setSelectedUpgrade(u); setShowUpgradeDetails(true); }}
-          />
-        }
-        workersContent={
-          <HireWorkersPanel 
-            availableWorkers={availableWorkers}
-            ownedWorkers={ownedWorkers}
-            cash={cash}
-            workerDiscountLevel={upgradeLevels.workerDiscountLevel}
-            onHire={handleHireWorker}
-          />
-        }
-        tokensContent={
-          <TokensPanel 
-            tokens={tokens}
-            activeToken={activeToken}
-            cash={cash}
-            tokenDiscountLevel={upgradeLevels.tokenDiscountLevel}
-            onSelect={handleTokenSelect}
-          />
-        }
-        celebritiesContent={
-          <Card>
-            <CardContent className="p-6">
-              <h3 className="font-bold font-mono text-lg mb-4">Celebrity Visits</h3>
-              <p className="text-muted-foreground mb-4 text-sm">
-                Famous crypto personalities may visit your mining farm! Unlock more by mining more.
-              </p>
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 p-2 bg-card/60 rounded">
-                  <span className="text-2xl">👑</span>
-                  <div>
-                    <p className="text-sm font-bold">Crypto King</p>
-                    <p className="text-xs text-muted-foreground">Always available</p>
-                  </div>
-                </div>
-                {totalMined >= 50000 && (
-                  <div className="flex items-center gap-2 p-2 bg-card/60 rounded">
-                    <span className="text-2xl">⚙️</span>
-                    <div>
-                      <p className="text-sm font-bold">Hash Master</p>
-                      <p className="text-xs text-muted-foreground">Unlocked at $50K mined</p>
-                    </div>
-                  </div>
-                )}
-                {totalMined >= 300000 && (
-                  <div className="flex items-center gap-2 p-2 bg-card/60 rounded">
-                    <span className="text-2xl">💎</span>
-                    <div>
-                      <p className="text-sm font-bold">Blockchain Baron</p>
-                      <p className="text-xs text-muted-foreground">Unlocked at $300K mined</p>
-                    </div>
-                  </div>
-                )}
-                {totalMined >= 1000000 && (
-                  <div className="flex items-center gap-2 p-2 bg-card/60 rounded">
-                    <span className="text-2xl">🎩</span>
-                    <div>
-                      <p className="text-sm font-bold">NFT Mogul</p>
-                      <p className="text-xs text-muted-foreground">Unlocked at $1M mined</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        }
-        onTabChange={handleTabChange}
-        activeTab={activeTab}
-      />
+      {/* Desktop bottom panel with close control */}
+      <div className="hidden lg:block fixed bottom-0 left-0 right-0 z-40">
+        {desktopPanelOpen ? (
+          <div className="relative">
+            <button
+              className="absolute right-4 -top-6 px-3 py-1 rounded-full bg-white shadow-md border text-sm font-semibold"
+              onClick={() => {
+                if (showTutorial) return; // keep open during tutorial
+                setDesktopPanelOpen(false);
+              }}
+            >
+              Close Menu
+            </button>
+            <BottomControlPanel
+              buildPCContent={(
+                <BuildPCPanel
+                  availablePCs={availablePCs as PCType[]}
+                  ownedPCs={ownedPCs}
+                  cash={cash}
+                  onPurchase={handlePurchasePC}
+                  onDelete={handleDeletePC}
+                />
+              )}
+              upgradeContent={(
+                <UpgradesPanel
+                  upgrades={upgrades}
+                  cash={cash}
+                    onPurchase={handleUpgrade}
+                  onShowDetails={(upgrade) => {
+                    setSelectedUpgrade(upgrade);
+                    setShowUpgradeDetails(true);
+                  }}
+                />
+              )}
+              workersContent={(
+                <HireWorkersPanel
+                  availableWorkers={availableWorkers as any[]}
+                  ownedWorkers={ownedWorkers}
+                  cash={cash}
+                  workerDiscountLevel={upgradeLevels.workerDiscountLevel}
+                  onHire={handleHireWorker}
+                />
+              )}
+              tokensContent={(
+                <TokensPanel
+                  tokens={tokens}
+                  activeToken={activeToken}
+                  cash={cash}
+                  tokenDiscountLevel={upgradeLevels.tokenDiscountLevel}
+                  onSelect={setActiveToken}
+                />
+              )}
+              celebritiesContent={(
+                <div className="text-muted-foreground text-sm">Celebrities features coming soon.</div>
+              )}
+              onTabChange={handleTabChange}
+              activeTab={activeTab}
+            />
+          </div>
+        ) : (
+          <div className="flex justify-center pb-2">
+            <button
+              className="px-4 py-2 rounded-full bg-white shadow-lg border font-semibold"
+              onClick={() => setDesktopPanelOpen(true)}
+            >
+              Open Menu
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Mobile Sheet Modals */}
@@ -1053,7 +1131,7 @@ export default function Game() {
               Hire Workers
             </SheetTitle>
           </SheetHeader>
-          <div className="mt-4 grid grid-cols-2 gap-3">
+          <div className="mt-4 grid grid-cols-1 gap-3">
             {availableWorkers.map(worker => (
               <WorkerCard 
                 key={worker.id}

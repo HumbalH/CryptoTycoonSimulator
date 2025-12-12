@@ -30,13 +30,13 @@ export function usePCs({
    * Find an available grid position for a new PC
    */
   const findAvailablePosition = useCallback((): [number, number, number] | null => {
-    const gridStart = -Math.floor(gridWidth / 2);
-    const gridEnd = gridStart + gridWidth;
-    const gridStartZ = -Math.floor(gridHeight / 2);
-    const gridEndZ = gridStartZ + gridHeight;
+    // PC grid coordinates match floor: x: -5 to 15, z: 12 to 28
+    // Grid cells are 2 units apart
+    const gridStartX = -5;
+    const gridStartZ = 12;
 
-    for (let z = gridStartZ; z < gridEndZ; z++) {
-      for (let x = gridStart; x < gridEnd; x++) {
+    for (let z = gridStartZ; z < gridStartZ + gridHeight * 2; z += 2) {
+      for (let x = gridStartX; x < gridStartX + gridWidth * 2; x += 2) {
         const occupied = ownedPCs.some(
           pc => Math.abs(pc.position[0] - x) < 0.5 && Math.abs(pc.position[2] - z) < 0.5
         );

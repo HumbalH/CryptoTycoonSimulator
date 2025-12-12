@@ -15,15 +15,15 @@ const HireWorkersPanel = memo(function HireWorkersPanel({ availableWorkers, owne
   const expertCount = ownedWorkers.filter(w => w.type === 'expert').length;
 
   return (
-    <div className="space-y-4 overflow-y-auto max-h-[600px]">
-      <div className="bg-card/60 border border-primary/20 rounded p-3">
-        <p className="text-xs text-muted-foreground font-mono">
+    <div className="space-y-3 sm:space-y-4 overflow-y-auto max-h-[600px]">
+      <div className="bg-card/60 border border-primary/20 rounded p-2 sm:p-3">
+        <p className="text-[10px] sm:text-xs text-muted-foreground font-mono">
           <span className="text-primary font-bold">Current Workers:</span> {technicianCount} Technicians | {engineerCount} Engineers | {expertCount} Experts
         </p>
       </div>
       <div>
-        <h3 className="font-bold font-mono text-sm text-muted-foreground mb-2">Available Workers</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
+        <h3 className="font-bold font-mono text-xs sm:text-sm text-muted-foreground mb-2">Available Workers</h3>
+        <div className="flex flex-col gap-2 md:grid md:grid-cols-1 lg:grid-cols-3">
           {availableWorkers.map(worker => {
             const discountedCost = Math.floor(worker.cost * (1 - workerDiscountLevel * 0.15));
             return (

@@ -2,6 +2,7 @@ import { useEffect, Dispatch, SetStateAction } from 'react';
 
 interface UseGamePersistenceProps {
   cash: number;
+  totalMined: number;
   gridWidth: number;
   gridHeight: number;
   rebirthCount: number;
@@ -12,6 +13,7 @@ interface UseGamePersistenceProps {
   activeToken: string;
   tutorialActive: boolean;
   setCash: (cash: number) => void;
+  setTotalMined: (value: number | ((prev: number) => number)) => void;
   setGridWidth: (width: number) => void;
   setGridHeight: (height: number) => void;
   setRebirthCount: (count: number) => void;
@@ -26,6 +28,7 @@ const GAME_VERSION = 4;
 
 export function useGamePersistence({
   cash,
+  totalMined,
   gridWidth,
   gridHeight,
   rebirthCount,
@@ -36,6 +39,7 @@ export function useGamePersistence({
   activeToken,
   tutorialActive,
   setCash,
+  setTotalMined,
   setGridWidth,
   setGridHeight,
   setRebirthCount,
@@ -71,6 +75,7 @@ export function useGamePersistence({
 
         // Load all state
         if (state.cash !== undefined) setCash(state.cash);
+        if (state.totalMined !== undefined) setTotalMined(state.totalMined);
         if (state.gridWidth !== undefined) setGridWidth(state.gridWidth);
         if (state.gridHeight !== undefined) setGridHeight(state.gridHeight);
         if (state.rebirthCount !== undefined) setRebirthCount(state.rebirthCount);
@@ -188,7 +193,7 @@ export function useGamePersistence({
       const gameState = {
         gameVersion: GAME_VERSION,
         cash,
-        totalMined: 0,
+        totalMined,
         gridWidth,
         gridHeight,
         rebirthCount,
@@ -215,7 +220,7 @@ export function useGamePersistence({
       const gameState = {
         gameVersion: GAME_VERSION,
         cash,
-        totalMined: 0,
+        totalMined,
         gridWidth,
         gridHeight,
         rebirthCount,

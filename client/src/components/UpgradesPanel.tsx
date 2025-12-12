@@ -15,7 +15,7 @@ const UpgradesPanel = memo(function UpgradesPanel({ upgrades, cash, onPurchase, 
   const automationUpgrades = upgrades.filter(u => u.category === 'automation');
 
   return (
-    <div className="space-y-4 overflow-y-auto max-h-[600px]">
+    <div className="space-y-4">
       <div className="bg-card/60 border border-primary/20 rounded p-3">
         <p className="text-xs text-muted-foreground font-mono">
           <span className="text-primary font-bold">Upgrade System:</span> Purchase upgrades to boost your mining operation permanently.
