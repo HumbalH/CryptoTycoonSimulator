@@ -1,4 +1,6 @@
+
 import { useEffect, Dispatch, SetStateAction } from 'react';
+import { GAME_VERSION } from '@/utils/gameConstants';
 
 interface UseGamePersistenceProps {
   cash: number;
@@ -24,7 +26,6 @@ interface UseGamePersistenceProps {
   onOfflineEarnings?: (amount: number, minutes: number) => void;
 }
 
-const GAME_VERSION = 4;
 
 export function useGamePersistence({
   cash,
