@@ -53,24 +53,20 @@ export function useGamePersistence({
 
   // Load game state on mount
   useEffect(() => {
-    // Check if tutorial is still active - if so, clear any saved game state
-    const tutorialCompleted = localStorage.getItem('tutorialCompleted') === 'true';
-    if (!tutorialCompleted) {
-      console.log('Tutorial not completed, clearing game state...');
-      localStorage.removeItem('gameState');
-      return;
-    }
 
+    // Only force tutorial if there is no save at all
     const gameState = localStorage.getItem('gameState');
     if (gameState) {
+      // If user has a save but tutorialCompleted is not true, set it to true
+      if (localStorage.getItem('tutorialCompleted') !== 'true') {
+        localStorage.setItem('tutorialCompleted', 'true');
+      }
       try {
         const state = JSON.parse(gameState);
-        
         // Version check
         if (!state.gameVersion || state.gameVersion < GAME_VERSION) {
-          console.log('Old save detected, clearing localStorage and forcing tutorial...');
+          console.log('Old save detected, clearing localStorage...');
           localStorage.removeItem('gameState');
-          localStorage.setItem('tutorialCompleted', 'false');
           return;
         }
 
@@ -82,11 +78,10 @@ export function useGamePersistence({
         if (state.rebirthCount !== undefined) setRebirthCount(state.rebirthCount);
         if (state.ownedPCs) setOwnedPCs(state.ownedPCs);
         if (state.ownedWorkers) setOwnedWorkers(state.ownedWorkers);
-        
+
         // Load and sync upgrades
         if (state.upgrades && state.upgrades.length > 0) {
           const validUpgradeIds = ['room-space', 'mining-speed', 'offline-boost', 'worker-discount', 'rebirth-discount', 'auto-collect', 'token-discount'];
-          
           setUpgrades((prev: any[]) => prev.map((upgrade: any) => {
             const oldUpgrade = state.upgrades.find((u: any) => u.id === upgrade.id);
             
