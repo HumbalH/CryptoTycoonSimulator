@@ -1,7 +1,7 @@
 import type { PCType, WorkerType, Token, Upgrade } from '@/types/game';
 
-export const GAME_VERSION = 2;
-export const INITIAL_CASH = 20000; // 20k starting cash
+export const GAME_VERSION = 20;
+export const INITIAL_CASH = 20000; // 20k starting cash for testing
 export const INITIAL_GRID_SIZE = 3;
 
 export const AVAILABLE_PCS: PCType[] = [
@@ -135,12 +135,12 @@ export const AVAILABLE_WORKERS: WorkerType[] = [
 ];
 
 export const DEFAULT_TOKENS: Token[] = [
-  { id: 'bitblitz', name: 'BitBlitz', symbol: 'BitBlitz', profitRate: 10, basePrice: 10, trend: 'up', unlocked: true, value: 10 },
-  { id: 'gala', name: 'Gala', symbol: 'GALA', profitRate: 15, basePrice: 15, trend: 'up', unlocked: false, value: 19 },
-  { id: 'bene', name: 'Bene', symbol: 'BENE', profitRate: 20, basePrice: 20, trend: 'neutral', unlocked: false, value: 38 },
-  { id: 'sol', name: 'Solana', symbol: 'SOL', profitRate: 25, basePrice: 25, trend: 'neutral', unlocked: false, value: 76 },
-  { id: 'eth', name: 'Ethereum', symbol: 'ETH', profitRate: 30, basePrice: 30, trend: 'down', unlocked: false, value: 148 },
-  { id: 'btc', name: 'Bitcoin', symbol: 'BTC', profitRate: 35, basePrice: 35, trend: 'up', unlocked: false, value: 290 }
+  { id: 'bitblitz', name: 'BitBlitz', symbol: 'BitBlitz', profitRate: 5, basePrice: 5, trend: 'up', unlocked: true, value: 10 },
+  { id: 'gala', name: 'Gala', symbol: 'GALA', profitRate: 8, basePrice: 8, trend: 'up', unlocked: false, value: 19 },
+  { id: 'bene', name: 'Bene', symbol: 'BENE', profitRate: 11, basePrice: 11, trend: 'neutral', unlocked: false, value: 38 },
+  { id: 'sol', name: 'Solana', symbol: 'SOL', profitRate: 14, basePrice: 14, trend: 'neutral', unlocked: false, value: 76 },
+  { id: 'eth', name: 'Ethereum', symbol: 'ETH', profitRate: 17, basePrice: 17, trend: 'down', unlocked: false, value: 148 },
+  { id: 'btc', name: 'Bitcoin', symbol: 'BTC', profitRate: 20, basePrice: 20, trend: 'up', unlocked: false, value: 290 }
 ];
 
 export const DEFAULT_UPGRADES: Upgrade[] = [

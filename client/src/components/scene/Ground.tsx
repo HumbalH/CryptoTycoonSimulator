@@ -23,8 +23,8 @@ export const Floor = memo(function Floor({ gridWidth, gridHeight }: FloorProps) 
   const floorWidth = gridWidth * 2;
   const floorDepth = gridHeight * 2;
   // Mining area center derived from desired grid start at (-15, -4)
-  const centerX = -15 + floorWidth / 2;
-  const centerZ = -4 + floorDepth / 2;
+  const centerX = -15 + floorWidth / 2 - 1;
+  const centerZ = -4 + floorDepth / 2 - 1;
 
   return (
     <>

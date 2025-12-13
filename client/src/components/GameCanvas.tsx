@@ -3,9 +3,9 @@ import { OrbitControls, PerspectiveCamera } from '@react-three/drei';
 import { Suspense, useMemo, useRef, useState } from 'react';
 import * as THREE from 'three';
 import { Search } from 'lucide-react';
-import City from './city/City';
+// import City from './city/City';
 import { MiningPC, type MiningPCProps } from './scene/MiningPC';
-import { DraggableMiningPC } from './scene/DraggableMiningPC';
+// import { DraggableMiningPC } from './scene/DraggableMiningPC';
 import { Worker } from './scene/Worker';
 import { Floor } from './scene/Ground';
 import { CameraPanBounds } from './scene/CameraPanBounds';
@@ -38,26 +38,24 @@ export default function GameCanvas({
   gridStartZ = -4,
   enableDragging = true
 }: GameCanvasProps) {
+  // Use only selectedPCId for both selection and placement
   const [hoveredCoords, setHoveredCoords] = useState<{ x: number; z: number } | null>(null);
   const controlsRef = useRef<any>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera>(null);
-
   const panBounds = useMemo(() => ({ minX: -30, maxX: 30, minZ: -32, maxZ: 36 }), []);
-
   const pcsFocus = useMemo(() => {
     if (!pcs.length) {
-      return { target: new THREE.Vector3(0, 1, 0), span: 15 };
+      return undefined;
     }
     const box = new THREE.Box3();
     pcs.forEach((pc) => box.expandByPoint(new THREE.Vector3(pc.position[0], pc.position[1], pc.position[2])));
     const size = box.getSize(new THREE.Vector3());
     const target = box.getCenter(new THREE.Vector3());
-    target.y = 1;
-    const span = Math.max(size.x, size.y, size.z, 8);
-    return { target, span };
+    return { target, span: Math.max(size.x, size.y, size.z, 8) };
   }, [pcs]);
 
   const focusOnPcs = () => {
+    if (!pcsFocus) return;
     const { target, span } = pcsFocus;
     const distance = span * 1.8;
     const dir = new THREE.Vector3(-1, 1, 1).normalize();
@@ -90,9 +88,58 @@ export default function GameCanvas({
           setHoveredCoords({ x: groundX, z: groundZ });
         }}
       >
-        <Suspense fallback={null}>
 
-          <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 50, 50]} fov={30} near={0.1} far={1000} />
+        <Suspense fallback={null}>
+          {/* Transparent floor mesh for PC movement */}
+          {selectedPCId && (
+            <mesh
+              // Move mesh further toward bottom right and make it larger
+              position={[
+                gridStartX + (gridWidth * 2) / 2, // center horizontally
+                0.12,
+                gridStartZ + (gridHeight * 2) / 2 // center vertically
+              ]}
+              rotation={[-Math.PI / 2, 0, 0]}
+              onPointerDown={(e) => {
+                if (e.button !== 0) return; // Only left click
+                if (!e.intersections || !e.intersections.length) return;
+                const intersect = e.intersections[0].point;
+                // Clamp to actual floor boundaries
+                const minX = gridStartX - 4;
+                const maxX = (gridStartX + gridWidth * 1.8);
+                const minZ = gridStartZ - 4;
+                const maxZ = (gridStartZ + gridHeight * 1.8);
+                // Check for overlap with existing PCs
+                const pcRadius = 0.7; // Adjust as needed for PC size
+                const isOverlapping = pcs.some(pc => {
+                  const dx = pc.position[0] - intersect.x;
+                  const dz = pc.position[2] - intersect.z;
+                  return Math.sqrt(dx * dx + dz * dz) < pcRadius * 2;
+                });
+                if (
+                  intersect.x >= minX && intersect.x <= maxX &&
+                  intersect.z >= minZ && intersect.z <= maxZ &&
+                  !isOverlapping
+                ) {
+                  if (onPCPositionChange) {
+                    onPCPositionChange(selectedPCId, [intersect.x, 0, intersect.z]);
+                  }
+                  if (onSelectPC) {
+                    onSelectPC(''); // Always deselect after placing
+                  }
+                } else {
+                  // Deselect if invalid
+                  if (onSelectPC) onSelectPC('');
+                }
+                e.stopPropagation();
+              }}
+            >
+              <planeGeometry args={[gridWidth * 2.6, gridHeight * 2.6]} />
+              <meshStandardMaterial transparent opacity={0} />
+            </mesh>
+          )}
+
+          <PerspectiveCamera ref={cameraRef} makeDefault position={[0, 22, 22]} fov={30} near={0.1} far={1000} />
           <OrbitControls
             ref={controlsRef}
             enablePan
@@ -102,9 +149,9 @@ export default function GameCanvas({
             maxPolarAngle={Math.PI / 3.5}
             minAzimuthAngle={0}
             maxAzimuthAngle={0}
-            minDistance={15}
+            minDistance={10}
             maxDistance={80}
-            target={[0, 0, 0]}
+            target={[gridStartX + (gridWidth * 2) / 2, 0, gridStartZ + (gridHeight * 2) / 2]}
             panSpeed={1.5}
             zoomSpeed={1.0}
             mouseButtons={{ LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN }}
@@ -130,50 +177,32 @@ export default function GameCanvas({
           <pointLight position={[0, 15, 0]} intensity={1.2} color="#ffe0b2" />
 
           <Floor gridWidth={gridWidth} gridHeight={gridHeight} />
-          <City />
+          {/* <City /> */}
 
           {/* Show grid boundary when a PC is selected */}
           {selectedPCId && enableDragging && (
             <GridBoundary 
               gridWidth={gridWidth}
               gridHeight={gridHeight}
-              gridStartX={gridStartX}
-              gridStartZ={gridStartZ}
+              gridStartX={gridStartX - 1}
+              gridStartZ={gridStartZ - 1}
             />
           )}
 
-          {pcs.map((pc) => 
-            enableDragging ? (
-              <DraggableMiningPC
-                key={pc.id}
-                id={pc.id}
-                position={pc.position}
-                type={pc.type}
-                token={pc.token}
-                isActive={pc.isActive}
-                pendingEarnings={pc.pendingEarnings}
-                onPCClick={onPCClick}
-                gridWidth={gridWidth}
-                gridHeight={gridHeight}
-                gridStartX={gridStartX}
-                gridStartZ={gridStartZ}
-                onPositionChange={onPCPositionChange}
-                isSelected={selectedPCId === pc.id}
-                onSelect={onSelectPC}
-              />
-            ) : (
-              <MiningPC
-                key={pc.id}
-                id={pc.id}
-                position={pc.position}
-                type={pc.type}
-                token={pc.token}
-                isActive={pc.isActive}
-                pendingEarnings={pc.pendingEarnings}
-                onPCClick={onPCClick}
-              />
-            )
-          )}
+          {pcs.map((pc) => (
+            <MiningPC
+              key={pc.id}
+              id={pc.id}
+              position={pc.position}
+              type={pc.type}
+              token={pc.token}
+              isActive={pc.isActive}
+              pendingEarnings={pc.pendingEarnings}
+              onPCClick={onPCClick ? () => onPCClick(pc.id) : undefined}
+              onSelectPC={onSelectPC}
+              isSelected={selectedPCId === pc.id}
+            />
+          ))}
 
           {workers.map((worker) => (
             <Worker key={worker.id} id={worker.id} pcs={pcs} workerType={worker.type} />

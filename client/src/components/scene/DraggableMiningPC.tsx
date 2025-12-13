@@ -11,6 +11,7 @@ interface DraggableMiningPCProps extends MiningPCProps {
   onPositionChange?: (pcId: string, newPosition: [number, number, number]) => void;
   isSelected?: boolean;
   onSelect?: (pcId: string) => void;
+  onDragStateChange?: (dragging: boolean) => void;
 }
 
 export function DraggableMiningPC({
@@ -63,6 +64,7 @@ export function DraggableMiningPC({
     if (!isSelected) return;
 
     setIsDragging(true);
+    // if (onDragStateChange) onDragStateChange(true);
     gl.domElement.style.cursor = 'grabbing';
     
     if (groupRef.current) {
@@ -82,6 +84,7 @@ export function DraggableMiningPC({
     if (!isDragging || !groupRef.current) return;
     
     setIsDragging(false);
+    // if (onDragStateChange) onDragStateChange(false);
     gl.domElement.style.cursor = 'default';
 
     // Snap to grid and validate

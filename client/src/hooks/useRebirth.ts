@@ -83,7 +83,7 @@ export function useRebirth({
     }
 
     // Reset game state
-    setCash(INITIAL_CASH);
+    setCash(20000); // 20k cash on rebirth for testing
     resetPCs();
     resetWorkers();
     

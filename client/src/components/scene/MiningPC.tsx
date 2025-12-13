@@ -1,3 +1,5 @@
+// Module-level WeakMap for hold timeouts
+const holdTimeouts: WeakMap<any, ReturnType<typeof setTimeout>> = new WeakMap();
 import { useGLTF } from '@react-three/drei';
 import { memo, useMemo, useRef } from 'react';
 import * as THREE from 'three';
@@ -12,9 +14,11 @@ export interface MiningPCProps {
   id: string;
   pendingEarnings?: number;
   onPCClick?: (pcId: string) => void;
+  onSelectPC?: (pcId: string) => void;
+  isSelected?: boolean;
 }
 
-export const MiningPC = memo(function MiningPC({ position, type, token, isActive, id, pendingEarnings = 0, onPCClick }: MiningPCProps) {
+export const MiningPC = memo(function MiningPC({ position, type, token, isActive, id, pendingEarnings = 0, onPCClick, onSelectPC, isSelected }: MiningPCProps) {
   const pcRef = useRef<THREE.Group>(null);
   const hasPendingEarnings = pendingEarnings > 0;
 
@@ -165,16 +169,45 @@ export const MiningPC = memo(function MiningPC({ position, type, token, isActive
     }
   };
 
+  // Always place PC group at y=0 (on the floor)
+  // Offset model upward inside renderBody if needed
   return (
-    <group ref={pcRef} position={position}>
+    <group ref={pcRef} position={[position[0], 0, position[2]]}>
       <mesh
         position={[0, height / 2 + 0.1, 0]}
-        onClick={() => onPCClick?.(id)}
-        onPointerEnter={(e) => {
-          e.object.scale.set(1.1, 1.1, 1.1);
+        onClick={() => {
+          if (hasPendingEarnings && onPCClick) {
+            onPCClick(id);
+          }
+        }}
+        onPointerDown={(e) => {
+          if (onSelectPC) {
+            const mesh = e.object;
+            const timeout = setTimeout(() => {
+              onSelectPC(id);
+            }, 400);
+            holdTimeouts.set(mesh, timeout);
+          }
+        }}
+        onPointerUp={(e) => {
+          const mesh = e.object;
+          const timeout = holdTimeouts.get(mesh);
+          if (timeout) {
+            clearTimeout(timeout);
+            holdTimeouts.delete(mesh);
+          }
         }}
         onPointerLeave={(e) => {
+          const mesh = e.object;
+          const timeout = holdTimeouts.get(mesh);
+          if (timeout) {
+            clearTimeout(timeout);
+            holdTimeouts.delete(mesh);
+          }
           e.object.scale.set(1, 1, 1);
+        }}
+        onPointerEnter={(e) => {
+          e.object.scale.set(1.1, 1.1, 1.1);
         }}
       >
         <boxGeometry args={[width + 0.3, height + 0.3, depth + 0.3]} />
@@ -207,6 +240,14 @@ export const MiningPC = memo(function MiningPC({ position, type, token, isActive
             <meshStandardMaterial color="#0a0a0a" />
           </mesh>
         ))
+      )}
+
+      {/* Selection feedback: orbit/outline if selected */}
+      {isSelected && (
+        <mesh position={[0, 0.07, 0]}>
+          <torusGeometry args={[width * 0.9, 0.18, 48, 96]} />
+          <meshStandardMaterial color="#38bdf8" emissive="#0ea5e9" emissiveIntensity={3.5} transparent opacity={1.0} />
+        </mesh>
       )}
 
       {isActive && (

@@ -62,7 +62,7 @@ export default function Game() {
   const [tutorialHasBoughtPC, setTutorialHasBoughtPC] = useState(false);
   const [tutorialWorkersTabClicked, setTutorialWorkersTabClicked] = useState(false);
   const [tutorialBuildTabClicked, setTutorialBuildTabClicked] = useState(false);
-  const [activeTab, setActiveTab] = useState('build');
+  const [activeTab, setActiveTab] = useState<string | undefined>(undefined);
 
   // Mining floor grid start (must match Floor component)
   // Must mirror Floor's start: centerX - floorWidth/2, centerZ - floorDepth/2
@@ -84,10 +84,10 @@ export default function Game() {
   
   // Desktop panel state
   const [desktopPanelOpen, setDesktopPanelOpen] = useState(true);
-  const [desktopActiveTab, setDesktopActiveTab] = useState('build');
+  const [desktopActiveTab, setDesktopActiveTab] = useState<string | undefined>(undefined);
 
   // PC dragging state
-  const [selectedPCId, setSelectedPCId] = useState<string | null>(null);
+  const [selectedPCId, setSelectedPCId] = useState<string>('');
 
   // Detect screen size changes for tutorial selection
   useEffect(() => {
@@ -137,9 +137,9 @@ export default function Game() {
     ));
   };
 
-  // Handle PC selection for dragging
+  // Handle PC selection for dragging (toggle)
   const handleSelectPC = (pcId: string) => {
-    setSelectedPCId(selectedPCId === pcId ? null : pcId);
+    setSelectedPCId(pcId);
   };
 
   // Handle tab changes for tutorial tracking
@@ -217,9 +217,9 @@ export default function Game() {
   // Keep menus open/focused during tutorial start
   useEffect(() => {
     if (showTutorial) {
-      setMobileMenuOpen('build');
       setDesktopPanelOpen(true);
-      setActiveTab('build');
+      setActiveTab(undefined);
+      setMobileMenuOpen(null);
     }
   }, [showTutorial]);
 
