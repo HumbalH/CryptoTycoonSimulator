@@ -68,9 +68,9 @@ export function useGamePersistence({
         
         // Version check
         if (!state.gameVersion || state.gameVersion < GAME_VERSION) {
-          console.log('Old save detected, clearing localStorage...');
+          console.log('Old save detected, clearing localStorage and forcing tutorial...');
           localStorage.removeItem('gameState');
-          localStorage.removeItem('tutorialCompleted');
+          localStorage.setItem('tutorialCompleted', 'false');
           return;
         }
 
