@@ -33,6 +33,7 @@ import bitblitzIcon from '@assets/generated_images/bitblitz_crypto_token_icon.pn
 import { INITIAL_CASH, INITIAL_GRID_SIZE, AVAILABLE_PCS, AVAILABLE_WORKERS, DEFAULT_TOKENS, DEFAULT_UPGRADES } from '@/utils/gameConstants';
 import { calculateRebirthCost, calculateEarningsMultiplier } from '@/utils/gameCalculations';
 import { Minigame } from '@/types/minigames';
+import { useInstantSave } from '@/hooks/useInstantSave';
 
 export default function Game() {
   const { toast } = useToast();
@@ -251,6 +252,21 @@ export default function Game() {
       setTotalMined(prev => prev + amount);
       setShowOfflineEarningsModal(true);
     }
+  });
+
+  // Instant save hook
+  const instantSave = useInstantSave({
+    cash,
+    totalMined,
+    gridWidth,
+    gridHeight,
+    rebirthCount,
+    ownedPCs,
+    ownedWorkers,
+    upgrades,
+    tokens,
+    activeToken,
+    tutorialActive: showTutorial
   });
 
   // Mining income - accumulate on PCs
@@ -474,6 +490,8 @@ export default function Game() {
         title: "PC Purchased!",
         description: `${pc.name} is now mining ${tokens.find(t => t.id === activeToken)?.name}`,
       });
+
+      instantSave();
     } else {
       toast({
         title: "No Space!",
@@ -506,6 +524,8 @@ export default function Game() {
       title: "Worker Hired!",
       description: `${worker.name} is now maintaining your PCs`,
     });
+
+    instantSave();
   }, [availableWorkers, cash, upgradeLevels.workerDiscountLevel, toast, showTutorial, tutorialHasBoughtWorker]);
 
   const handleTokenSelect = useCallback((tokenId: string) => {
@@ -524,6 +544,8 @@ export default function Game() {
         title: "Token Switched!",
         description: `Now mining ${token.name} (-$${switchCost})`,
       });
+
+      instantSave();
     }
   }, [tokens, activeToken, cash, upgradeLevels.tokenDiscountLevel, toast]);
 
@@ -629,6 +651,8 @@ export default function Game() {
       setPendingCelebrityReward(null);
       setCelebrityVisit(null);
     }
+
+    instantSave();
   };
 
   // Clean up expired boosts
@@ -757,6 +781,8 @@ export default function Game() {
       title: "Rebirth Complete!",
       description: `You are now at rebirth level ${rebirthCount + 1}. New multiplier: ${(1 + ((rebirthCount + 1) * 0.1)).toFixed(1)}x`,
     });
+
+    instantSave();
   };
 
   const handleUpgrade = (upgradeId: string) => {
@@ -796,6 +822,8 @@ export default function Game() {
       title: "Upgrade Complete!",
       description: `${upgrade.name} is now level ${upgrade.currentLevel + 1}`,
     });
+
+    instantSave();
   };
 
   // Toggle dark mode
