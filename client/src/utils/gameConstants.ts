@@ -1,6 +1,6 @@
 import type { PCType, WorkerType, Token, Upgrade } from '@/types/game';
 
-export const GAME_VERSION = 20;
+export const GAME_VERSION = 21;
 export const INITIAL_CASH = 20000; // 20k starting cash for testing
 export const INITIAL_GRID_SIZE = 3;
 
