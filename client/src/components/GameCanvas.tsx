@@ -199,6 +199,8 @@ export default function GameCanvas({
               isActive={pc.isActive}
               pendingEarnings={pc.pendingEarnings}
               onPCClick={onPCClick ? () => onPCClick(pc.id) : undefined}
+              onSelectPC={onSelectPC}
+              isSelected={selectedPCId === pc.id}
             />
           ))}
 
