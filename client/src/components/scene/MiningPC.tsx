@@ -1,5 +1,3 @@
-// Module-level WeakMap for hold timeouts
-const holdTimeouts: WeakMap<any, ReturnType<typeof setTimeout>> = new WeakMap();
 import { useGLTF } from '@react-three/drei';
 import { memo, useMemo, useRef } from 'react';
 import * as THREE from 'three';
@@ -14,11 +12,9 @@ export interface MiningPCProps {
   id: string;
   pendingEarnings?: number;
   onPCClick?: (pcId: string) => void;
-  onSelectPC?: (pcId: string) => void;
-  isSelected?: boolean;
 }
 
-export const MiningPC = memo(function MiningPC({ position, type, token, isActive, id, pendingEarnings = 0, onPCClick, onSelectPC, isSelected }: MiningPCProps) {
+export const MiningPC = memo(function MiningPC({ position, type, token, isActive, id, pendingEarnings = 0, onPCClick }: MiningPCProps) {
   const pcRef = useRef<THREE.Group>(null);
   const hasPendingEarnings = pendingEarnings > 0;
 
@@ -63,17 +59,10 @@ export const MiningPC = memo(function MiningPC({ position, type, token, isActive
       case 'laptop':
         return (
           <group position={[0, height / 2, 0]}>
-            <mesh castShadow position={[0, -height * 0.15, 0]}>
-              <boxGeometry args={[width * 1.1, height * 0.2, depth * 1.1]} />
-              <meshStandardMaterial color="#0f172a" metalness={0.7} roughness={0.3} />
-            </mesh>
+            {/* Removed dark, thin meshes to test for black line artifacts */}
             <mesh castShadow position={[0, 0, 0]}>
               <boxGeometry args={[width, height * 0.1, depth]} />
               <meshStandardMaterial color={color} metalness={0.6} roughness={0.25} emissive={isActive ? emissive : '#000'} emissiveIntensity={isActive ? 0.4 : 0} />
-            </mesh>
-            <mesh castShadow position={[0, height * 0.35, -depth * 0.15]} rotation={[-Math.PI / 2.8, 0, 0]}>
-              <boxGeometry args={[width * 0.95, height * 0.05, depth * 0.9]} />
-              <meshStandardMaterial color="#0b1224" metalness={0.65} roughness={0.2} emissive={isActive ? accent : '#000'} emissiveIntensity={isActive ? 0.9 : 0} />
             </mesh>
           </group>
         );
@@ -93,32 +82,23 @@ export const MiningPC = memo(function MiningPC({ position, type, token, isActive
           </group>
         );
       case 'gaming':
+        // Simple rectangular box for gaming PC
         return (
-          <group position={[0, 0, 0]}>
-            <primitive object={gamingScene} scale={0.35} />
+          <group position={[0, height / 2, 0]}>
+            <mesh castShadow>
+              <boxGeometry args={[width, height, depth]} />
+              <meshStandardMaterial color="#ec4899" metalness={0.6} roughness={0.25} />
+            </mesh>
           </group>
         );
       case 'mining-rig':
+        // Solid purplish box for mining rig
         return (
           <group position={[0, height / 2, 0]}>
-            {[-width / 2, width / 2].map((x, i) => (
-              <mesh key={`rail-${i}`} position={[x, 0, 0]} castShadow>
-                <boxGeometry args={[0.08, height, depth + 0.1]} />
-                <meshStandardMaterial color="#374151" metalness={0.6} roughness={0.35} />
-              </mesh>
-            ))}
-            {[-depth / 2, depth / 2].map((z, i) => (
-              <mesh key={`bar-${i}`} position={[0, height / 2, z]} castShadow>
-                <boxGeometry args={[width + 0.08, 0.08, 0.08]} />
-                <meshStandardMaterial color="#111827" metalness={0.7} roughness={0.25} />
-              </mesh>
-            ))}
-            {[-0.25, 0, 0.25].map((x, i) => (
-              <mesh key={`gpu-${i}`} position={[x, 0, 0]} castShadow>
-                <boxGeometry args={[width * 0.5, height * 0.5, depth * 0.12]} />
-                <meshStandardMaterial color={color} metalness={0.65} roughness={0.25} emissive={isActive ? emissive : '#000'} emissiveIntensity={isActive ? 0.5 : 0} />
-              </mesh>
-            ))}
+            <mesh castShadow>
+              <boxGeometry args={[width, height, depth]} />
+              <meshStandardMaterial color="#a78bfa" metalness={0.5} roughness={0.3} />
+            </mesh>
           </group>
         );
       case 'server':
@@ -169,45 +149,16 @@ export const MiningPC = memo(function MiningPC({ position, type, token, isActive
     }
   };
 
-  // Always place PC group at y=0 (on the floor)
-  // Offset model upward inside renderBody if needed
   return (
-    <group ref={pcRef} position={[position[0], 0, position[2]]}>
+    <group ref={pcRef} position={position}>
       <mesh
         position={[0, height / 2 + 0.1, 0]}
-        onClick={() => {
-          if (hasPendingEarnings && onPCClick) {
-            onPCClick(id);
-          }
-        }}
-        onPointerDown={(e) => {
-          if (onSelectPC) {
-            const mesh = e.object;
-            const timeout = setTimeout(() => {
-              onSelectPC(id);
-            }, 400);
-            holdTimeouts.set(mesh, timeout);
-          }
-        }}
-        onPointerUp={(e) => {
-          const mesh = e.object;
-          const timeout = holdTimeouts.get(mesh);
-          if (timeout) {
-            clearTimeout(timeout);
-            holdTimeouts.delete(mesh);
-          }
-        }}
-        onPointerLeave={(e) => {
-          const mesh = e.object;
-          const timeout = holdTimeouts.get(mesh);
-          if (timeout) {
-            clearTimeout(timeout);
-            holdTimeouts.delete(mesh);
-          }
-          e.object.scale.set(1, 1, 1);
-        }}
+        onClick={() => onPCClick?.(id)}
         onPointerEnter={(e) => {
           e.object.scale.set(1.1, 1.1, 1.1);
+        }}
+        onPointerLeave={(e) => {
+          e.object.scale.set(1, 1, 1);
         }}
       >
         <boxGeometry args={[width + 0.3, height + 0.3, depth + 0.3]} />
@@ -240,14 +191,6 @@ export const MiningPC = memo(function MiningPC({ position, type, token, isActive
             <meshStandardMaterial color="#0a0a0a" />
           </mesh>
         ))
-      )}
-
-      {/* Selection feedback: orbit/outline if selected */}
-      {isSelected && (
-        <mesh position={[0, 0.07, 0]}>
-          <torusGeometry args={[width * 0.9, 0.18, 48, 96]} />
-          <meshStandardMaterial color="#38bdf8" emissive="#0ea5e9" emissiveIntensity={3.5} transparent opacity={1.0} />
-        </mesh>
       )}
 
       {isActive && (

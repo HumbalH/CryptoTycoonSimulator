@@ -750,7 +750,7 @@ export default function Game() {
     }
 
     // Reset game state but keep rebirth count
-    setCash(INITIAL_CASH);
+    setCash(20000000);
     setOwnedPCs([{
       id: 'pc-1',
       type: availablePCs[0],
@@ -994,7 +994,42 @@ export default function Game() {
                 />
               )}
               celebritiesContent={(
-                <div className="text-muted-foreground text-sm">Celebrities features coming soon.</div>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 p-3 bg-card/60 rounded border border-primary/20">
+                    <span className="text-2xl">👑</span>
+                    <div>
+                      <p className="text-sm font-bold">Crypto King</p>
+                      <p className="text-xs text-muted-foreground">Always available</p>
+                    </div>
+                  </div>
+                  {totalMined >= 50000 && (
+                    <div className="flex items-center gap-2 p-3 bg-card/60 rounded border border-primary/20">
+                      <span className="text-2xl">⚙️</span>
+                      <div>
+                        <p className="text-sm font-bold">Hash Master</p>
+                        <p className="text-xs text-muted-foreground">Unlocked at $50K mined</p>
+                      </div>
+                    </div>
+                  )}
+                  {totalMined >= 300000 && (
+                    <div className="flex items-center gap-2 p-3 bg-card/60 rounded border border-primary/20">
+                      <span className="text-2xl">💎</span>
+                      <div>
+                        <p className="text-sm font-bold">Blockchain Baron</p>
+                        <p className="text-xs text-muted-foreground">Unlocked at $300K mined</p>
+                      </div>
+                    </div>
+                  )}
+                  {totalMined >= 1000000 && (
+                    <div className="flex items-center gap-2 p-3 bg-card/60 rounded border border-primary/20">
+                      <span className="text-2xl">🎩</span>
+                      <div>
+                        <p className="text-sm font-bold">NFT Mogul</p>
+                        <p className="text-xs text-muted-foreground">Unlocked at $1M mined</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               )}
               onTabChange={handleTabChange}
               activeTab={activeTab}
@@ -1160,14 +1195,17 @@ export default function Game() {
             </SheetTitle>
           </SheetHeader>
           <div className="mt-4 grid grid-cols-1 gap-3">
-            {availableWorkers.map(worker => (
-              <WorkerCard 
-                key={worker.id}
-                worker={worker}
-                canAfford={cash >= worker.cost}
-                onHire={handleHireWorker}
-              />
-            ))}
+            {availableWorkers.map(worker => {
+              const discountedCost = Math.floor(worker.cost * (1 - upgradeLevels.workerDiscountLevel * 0.15));
+              return (
+                <WorkerCard 
+                  key={worker.id}
+                  worker={{ ...worker, cost: discountedCost }}
+                  canAfford={cash >= discountedCost}
+                  onHire={handleHireWorker}
+                />
+              );
+            })}
           </div>
         </SheetContent>
       </Sheet>
