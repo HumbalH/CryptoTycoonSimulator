@@ -750,7 +750,7 @@ export default function Game() {
     }
 
     // Reset game state but keep rebirth count
-    setCash(20000000);
+    setCash(20000);
     setOwnedPCs([{
       id: 'pc-1',
       type: availablePCs[0],
